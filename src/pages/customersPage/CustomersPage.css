@@ -1,0 +1,144 @@
+/* CustomersPage.css */
+
+.customer-page {
+    padding: 30px;
+    height: 100%;
+}
+
+.customer-page--dark { background: #050505; color: #fff; }
+.customer-page--light { background: #f4f6f8; color: #333; }
+
+/* Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.page-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1.5rem; font-weight: 800;
+}
+
+/* Controls */
+.controls-bar { margin-bottom: 20px; }
+.search-box {
+    display: flex; align-items: center;
+    background: rgba(128,128,128,0.1);
+    padding: 10px 15px; border-radius: 10px;
+    border: 1px solid rgba(128,128,128,0.2);
+    max-width: 400px;
+}
+.search-box input {
+    background: transparent; border: none; color: inherit; width: 100%; margin-left: 10px; outline: none;
+}
+
+/* Table */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { text-align: left; padding: 15px; opacity: 0.7; font-size: 0.85rem; border-bottom: 1px solid rgba(128,128,128,0.2); }
+.data-table td { padding: 15px; border-bottom: 1px solid rgba(128,128,128,0.1); vertical-align: middle; }
+
+.badge-type {
+    padding: 4px 8px; border-radius: 5px; font-size: 0.75rem; font-weight: bold;
+}
+.badge-type.regular { background: rgba(128,128,128,0.2); }
+.badge-type.vip { background: rgba(212, 175, 55, 0.2); color: #D4AF37; }
+.badge-type.wholesaler { background: rgba(0, 100, 255, 0.2); color: #4facfe; }
+
+.actions { display: flex; gap: 10px; }
+.actions button { background: none; border: none; color: inherit; opacity: 0.6; cursor: pointer; transition: 0.2s; }
+.actions button:hover { opacity: 1; transform: scale(1.1); }
+.text-red:hover { color: #ff4d4d; }
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000;
+}
+
+.modal-content {
+    background: #111; padding: 30px; border-radius: 15px; width: 500px; border: 1px solid #333;
+}
+.modal--light .modal-content { background: #fff; border-color: #ddd; }
+
+.modal-lg { width: 700px; }
+
+.modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 1.2rem; font-weight: bold; }
+
+.modal-form { display: flex; flex-direction: column; gap: 15px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+.input-field {
+    padding: 12px; border-radius: 8px; border: 1px solid rgba(128,128,128,0.3);
+    background: transparent; color: inherit; outline: none;
+}
+
+.btn-submit {
+    background: #D4AF37; color: #000; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;
+}
+
+/* History Table */
+.history-table { width: 100%; text-align: left; }
+.history-table th { padding: 10px; opacity: 0.6; font-size: 0.8rem; }
+.history-table td { padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.1); }
+.text-gold { color: #D4AF37; font-weight: bold; }
+
+/* اضافه به فایل قبلی */
+
+.scan-section {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px dashed #D4AF37;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.scan-label {
+    font-size: 0.8rem;
+    color: #D4AF37;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.btn-scan {
+    background: #D4AF37;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    transition: 0.2s;
+}
+
+.btn-scan:hover {
+    background: #b8860b;
+}
+
+.btn-scan:disabled {
+    background: #555;
+    cursor: not-allowed;
+    color: #aaa;
+}
+
+.file-preview {
+    font-size: 0.75rem;
+    margin-top: 8px;
+    color: #00c853;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

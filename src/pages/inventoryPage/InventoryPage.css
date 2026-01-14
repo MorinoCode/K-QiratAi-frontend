@@ -1,0 +1,181 @@
+/* InventoryPage.css */
+
+.inventory-page {
+    padding: 30px;
+    min-height: 100%;
+    font-family: 'Inter', sans-serif;
+}
+
+.inventory-page--dark { background: #0a0a0a; color: #fff; }
+.inventory-page--light { background: #f4f6f8; color: #333; }
+
+/* Header */
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.inventory-title { font-size: 1.8rem; font-weight: 800; }
+
+.inventory-stats {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.stat-badge {
+    background: rgba(128,128,128,0.1);
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    border: 1px solid rgba(128,128,128,0.2);
+    white-space: nowrap;
+}
+
+.btn-add {
+    background: #D4AF37; color: #000; border: none; padding: 10px 20px;
+    border-radius: 8px; font-weight: bold; display: flex; align-items: center;
+    gap: 8px; cursor: pointer;
+}
+
+/* Controls */
+.inventory-controls {
+    display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;
+}
+
+.search-box, .filter-box {
+    display: flex; align-items: center; background: rgba(128,128,128,0.05);
+    border: 1px solid rgba(128,128,128,0.2); padding: 10px 15px;
+    border-radius: 10px; flex: 1; min-width: 200px;
+}
+
+.search-box input, .filter-box select {
+    background: transparent; border: none; outline: none; color: inherit;
+    width: 100%; margin-left: 10px; font-size: 0.9rem;
+}
+
+/* Table */
+.table-container {
+    background: rgba(128,128,128,0.03);
+    border-radius: 15px;
+    border: 1px solid rgba(128,128,128,0.1);
+    overflow: hidden;
+}
+
+.table-wrapper { width: 100%; overflow-x: auto; }
+.inventory-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 800px; }
+.inventory-table th, .inventory-table td { padding: 15px; white-space: nowrap; }
+
+/* Mobile */
+@media (max-width: 768px) {
+    .inventory-page { padding: 15px; }
+    .inventory-header { flex-direction: column; align-items: flex-start; }
+    .inventory-stats { width: 100%; overflow-x: auto; padding-bottom: 5px; }
+    .btn-add { width: 100%; justify-content: center; }
+    .inventory-controls { flex-direction: column; }
+}
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(128,128,128,0.3);
+    color: inherit;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+.btn-secondary:hover {
+    background: rgba(128,128,128,0.1);
+    border-color: #D4AF37;
+    color: #D4AF37;
+}
+
+/* Controls Update */
+.inventory-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    flex: 2; /* جستجو فضای بیشتری بگیرد */
+    min-width: 250px;
+}
+
+.scan-icon-indicator {
+    opacity: 0.5;
+    margin-right: 5px;
+}
+
+.filters-group {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    min-width: 280px;
+}
+
+.filter-box {
+    flex: 1;
+}
+
+/* Table Row Interactive Style */
+.inventory-table__row {
+    transition: background-color 0.2s;
+    cursor: pointer; /* نشانگر ماوس به شکل دست */
+}
+
+.inventory-table__row:hover {
+    transform: scale(1.002); /* افکت زوم خیلی ریز */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    z-index: 10;
+    position: relative;
+}
+
+.inventory-page--dark .inventory-table__row:hover {
+    background-color: rgba(212, 175, 55, 0.05); /* هایلایت طلایی در دارک */
+}
+
+.inventory-page--light .inventory-table__row:hover {
+    background-color: #fff;
+}
+
+/* Category Tag Style */
+.item-category-tag {
+    font-size: 0.7rem;
+    background: rgba(128,128,128,0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+    display: inline-block;
+    color: #888;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .btn-text { display: none; } /* متن دکمه‌ها در موبایل مخفی شود */
+    .inventory-stats { width: 100%; overflow-x: auto; padding-bottom: 10px; }
+    .filters-group { width: 100%; }
+}

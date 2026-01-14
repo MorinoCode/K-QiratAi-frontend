@@ -1,0 +1,35 @@
+.staff-page { padding: 30px; height: 100%; overflow-y: auto; }
+.staff-page--dark { background: #050505; color: #fff; }
+.staff-page--light { background: #f4f6f8; color: #333; }
+
+.staff-grid { display: grid; grid-template-columns: 350px 1fr; gap: 30px; margin-top: 20px; }
+
+.info-card, .ai-card {
+    background: rgba(128,128,128,0.05);
+    border: 1px solid rgba(128,128,128,0.1);
+    padding: 25px; border-radius: 15px; margin-bottom: 20px;
+    text-align: center;
+}
+
+.avatar-placeholder {
+    width: 80px; height: 80px; background: #333; color: #D4AF37;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 15px;
+}
+
+.store-name, .join-date { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; opacity: 0.7; margin-top: 5px; }
+
+.ai-header {
+    display: flex; align-items: center; gap: 10px; color: #D4AF37; font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 10px;
+}
+
+.stat-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem; }
+
+.ai-insight {
+    background: rgba(0, 200, 83, 0.1); border: 1px dashed #00c853;
+    padding: 15px; border-radius: 10px; margin-top: 20px; font-size: 0.85rem; text-align: left;
+}
+
+@media (max-width: 900px) {
+    .staff-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,109 @@
+/* src/components/layout/MainLayout.css */
+
+.main-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-color: #050505;
+    overflow: hidden;
+    position: relative;
+}
+
+/* --- SIDEBAR CONTAINER --- */
+/* رفتار یکسان برای تمام دستگاه‌ها */
+.layout-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px; /* در حالت پیش‌فرض همیشه مخفی است */
+    width: 280px;
+    height: 100%;
+    z-index: 1000;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 15px rgba(0,0,0,0.5); /* سایه بیشتر برای جدا شدن از صفحه */
+}
+
+/* وقتی دکمه همبرگر زده شود، این کلاس اضافه می‌شود */
+.layout-sidebar.open {
+    left: 0;
+}
+
+/* --- OVERLAY --- */
+/* لایه تاریک همیشه فعال است وقتی منو باز شود */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 900;
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.3s;
+    backdrop-filter: blur(3px); /* تار کردن پس‌زمینه */
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- CONTENT AREA --- */
+.layout-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    background-color: #050505;
+    position: relative;
+    width: 100%;
+}
+
+/* --- MAIN HEADER (Previously Mobile Header) --- */
+/* این هدر حالا در دسکتاپ هم نمایش داده می‌شود */
+.main-header {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    background-color: #111;
+    border-bottom: 1px solid #333;
+    color: #D4AF37;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 800;
+}
+
+.hamburger-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-right: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #D4AF37;
+    transition: transform 0.2s;
+}
+
+.hamburger-btn:hover {
+    transform: scale(1.1);
+}
+
+.brand-title {
+    font-weight: 800;
+    font-size: 1.2rem;
+    letter-spacing: 1.5px;
+    color: #fff;
+}
+
+.brand-title span {
+    color: #D4AF37;
+}
+
+.page-container {
+    flex: 1;
+    padding: 0;
+    max-width: 100%;
+}

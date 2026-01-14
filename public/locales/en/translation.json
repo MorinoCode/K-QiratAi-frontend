@@ -1,0 +1,14 @@
+{
+  "app_title": "K-QIRAT AI",
+  "dashboard": "Dashboard",
+  "inventory": "Inventory",
+  "sales": "Sales & POS",
+  "old_gold": "Old Gold Buy",
+  "customers": "Customers",
+  "manage": "Manage Store",
+  "logout": "Logout",
+  "light_mode": "Light Mode",
+  "dark_mode": "Dark Mode",
+  "current_branch": "Current Branch",
+  "welcome": "Welcome"
+}

@@ -1,0 +1,21 @@
+.old-gold-page { padding: 30px; height: 100%; display: flex; flex-direction: column; align-items: center; }
+.old-gold-page--dark { background: #050505; color: #fff; }
+.old-gold-page--light { background: #f4f6f8; color: #333; }
+
+.page-header h1 { display: flex; align-items: center; gap: 10px; color: #D4AF37; margin-bottom: 30px; }
+
+.purchase-container { width: 100%; max-width: 600px; background: rgba(128,128,128,0.05); padding: 30px; border-radius: 15px; border: 1px solid rgba(128,128,128,0.2); }
+
+.form-section { margin-bottom: 25px; }
+.form-section h3 { margin-bottom: 15px; font-size: 1rem; opacity: 0.8; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 5px; }
+
+.input-field { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid rgba(128,128,128,0.3); background: transparent; color: inherit; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.price-row { display: flex; gap: 10px; }
+.highlight { border-color: #D4AF37; }
+.btn-auto { background: #333; color: #fff; border: none; padding: 0 15px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+
+.total-display { font-size: 1.5rem; font-weight: bold; text-align: center; margin: 20px 0; padding: 15px; background: rgba(212, 175, 55, 0.1); border-radius: 10px; color: #D4AF37; }
+
+.btn-submit-large { width: 100%; padding: 15px; background: #D4AF37; color: #000; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; justify-content: center; gap: 10px; align-items: center; }
