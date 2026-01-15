@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
 import './StaffDetailsPage.css';
@@ -9,6 +10,7 @@ const StaffDetailsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -16,85 +18,91 @@ const StaffDetailsPage = () => {
         const fetchDetails = async () => {
             try {
                 const res = await api.get(`/manage/staff/${id}`);
-                setData(res.data);
+                setData(res.data.data);
                 setLoading(false);
             } catch (err) {
                 console.error(err);
-                alert("Failed to load staff details");
+                alert(t('failed_load_staff'));
                 navigate('/manage');
             }
         };
         fetchDetails();
-    }, [id, navigate]);
+    }, [id, navigate, t]);
 
-    if (loading) return <div className={`staff-page staff-page--${theme} loading`}>Loading Analysis...</div>;
+    if (loading) return <div className={`staff-page staff-page--${theme} staff-page--loading`}>{t('loading_analysis')}</div>;
 
     const { staff, history, stats } = data;
 
     return (
         <div className={`staff-page staff-page--${theme}`}>
-            <header className="page-header">
-                <button className="btn-back" onClick={() => navigate('/manage')}>
-                    <ArrowLeft size={20}/> Back to List
+            <header className="staff-page__header">
+                <button className="staff-page__back-btn" onClick={() => navigate('/manage')}>
+                    <ArrowLeft size={20}/> {t('back_to_list')}
                 </button>
-                <h1>{staff.full_name}</h1>
-                <span className="badge-role">{staff.role}</span>
+                <h1 className="staff-page__title">{staff.full_name}</h1>
+                <span className={`staff-page__badge staff-page__badge--${staff.role}`}>{staff.role}</span>
             </header>
 
             <div className="staff-grid">
-                {/* Left: Profile & AI Stats */}
                 <div className="staff-sidebar">
-                    <div className="info-card">
-                        <div className="avatar-placeholder"><User size={40}/></div>
-                        <h3>{staff.username}</h3>
-                        <p className="store-name"><Briefcase size={14}/> {staff.store?.name}</p>
-                        <p className="join-date"><Calendar size={14}/> Joined: {new Date(staff.createdAt).toLocaleDateString()}</p>
+                    <div className="staff-info-card">
+                        <div className="staff-avatar-placeholder"><User size={40}/></div>
+                        <h3 className="staff-info-card__username">{staff.username}</h3>
+                        <p className="staff-info-card__detail">
+                            <Briefcase size={14}/> {staff.branch ? staff.branch.name : t('no_branch')}
+                        </p>
+                        <p className="staff-info-card__detail">
+                            <Calendar size={14}/> {t('joined')}: {new Date(staff.createdAt).toLocaleDateString()}
+                        </p>
                     </div>
 
-                    <div className="ai-card">
-                        <div className="ai-header">
+                    <div className="staff-ai-card">
+                        <div className="staff-ai-header">
                             <TrendingUp size={18}/> 
-                            <span>AI Performance Analytics</span>
+                            <span>{t('ai_performance_analytics')}</span>
                         </div>
-                        <div className="stat-row">
-                            <span>Total Sales Volume:</span>
-                            <strong>{stats.total_sales_volume} KWD</strong>
+                        <div className="staff-stat-row">
+                            <span>{t('total_sales_volume')}:</span>
+                            <strong>{stats.total_sales_volume} {t('kwd')}</strong>
                         </div>
-                        <div className="stat-row">
-                            <span>Total Invoices:</span>
+                        <div className="staff-stat-row">
+                            <span>{t('total_invoices')}:</span>
                             <strong>{stats.total_invoices}</strong>
                         </div>
-                        <div className="ai-insight">
-                            <p>🤖 <strong>AI Insight:</strong> Data collection in progress. Sales patterns will appear here next month.</p>
+                        <div className="staff-ai-insight">
+                            <p>🤖 <strong>{t('ai_insight')}:</strong> {t('ai_insight_text')}</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Right: Sales History */}
                 <div className="staff-content">
-                    <h2>Recent Sales History</h2>
-                    <div className="table-wrapper">
-                        <table className="data-table">
-                            <thead>
+                    <h2 className="staff-content__title">{t('recent_sales_history')}</h2>
+                    <div className="staff-table-wrapper">
+                        <table className="staff-data-table">
+                            <thead className="staff-data-table__head">
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Invoice #</th>
-                                    <th>Customer</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
+                                    <th>{t('date')}</th>
+                                    <th>{t('invoice_no')}</th>
+                                    <th>{t('customer')}</th>
+                                    <th>{t('amount')}</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="staff-data-table__body">
                                 {history.map(inv => (
-                                    <tr key={inv.id}>
+                                    <tr key={inv.id} className="staff-data-table__row">
                                         <td>{new Date(inv.createdAt).toLocaleDateString()}</td>
                                         <td>{inv.invoice_number}</td>
-                                        <td>{inv.customer_name}</td>
-                                        <td className="text-gold">{inv.total_amount} KWD</td>
-                                        <td>{inv.payment_method}</td>
+                                        <td>{inv.customer ? inv.customer.full_name : t('unknown')}</td>
+                                        <td className="staff-text-gold">{inv.total_amount} {t('kwd')}</td>
                                     </tr>
                                 ))}
-                                {history.length === 0 && <tr><td colspan="5" style={{textAlign:'center'}}>No sales records found.</td></tr>}
+                                {history.length === 0 && (
+                                    <tr>
+                                        <td colSpan="4" className="staff-data-table__empty">
+                                            {t('no_sales_records')}
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

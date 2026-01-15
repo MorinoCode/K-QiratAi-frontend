@@ -6,19 +6,19 @@
     flex-direction: column;
     padding: 20px;
     transition: all 0.3s ease;
-    overflow-y: auto; /* برای اسکرول شدن در مانیتورهای کوچک */
+    overflow-y: auto;
 }
 
 .sidebar-inner--dark {
     background-color: #111;
     color: #fff;
-    border-right: 1px solid #222;
+    border-inline-end: 1px solid #222; /* RTL friendly border */
 }
 
 .sidebar-inner--light {
     background-color: #fff;
     color: #333;
-    border-right: 1px solid #ddd;
+    border-inline-end: 1px solid #ddd; /* RTL friendly border */
 }
 
 /* Header */
@@ -41,7 +41,7 @@
 .sidebar__logo--light { color: #B8860B; }
 
 .sidebar__close-btn {
-    display: none; /* در دسکتاپ مخفی */
+    display: none;
     background: none;
     border: none;
     color: inherit;
@@ -60,6 +60,7 @@
     display: block;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-align: start; /* RTL friendly */
 }
 
 .sidebar__branch-selector {
@@ -93,7 +94,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    overflow: hidden; /* جلوگیری از بهم ریختگی متن طولانی */
+    overflow: hidden;
 }
 
 .sidebar__branch-icon-bg {
@@ -108,7 +109,6 @@
     flex-shrink: 0;
 }
 
-/* استایل آیکون شعبه اصلی */
 .main-branch-icon {
     background-color: #D4AF37 !important;
     color: #000 !important;
@@ -122,9 +122,8 @@
     text-overflow: ellipsis;
 }
 
-/* --- Dropdown Menu (Fixed) --- */
+/* Dropdown */
 .branch-dropdown {
-    /* تغییر مهم: پوزیشن را از absolute برمی‌داریم تا در اسکرول گیر نکند */
     margin-top: 10px;
     border-radius: 10px;
     overflow: hidden;
@@ -184,7 +183,7 @@
 
 /* Navigation */
 .sidebar__nav {
-    flex: 1; /* پر کردن فضای خالی */
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -203,7 +202,12 @@
 }
 
 .sidebar__nav-item:hover {
-    transform: translateX(5px);
+    /* For RTL support, use logical property or handle direction */
+    transform: translateX(5px); 
+}
+/* RTL specific hover effect */
+html[dir="rtl"] .sidebar__nav-item:hover {
+    transform: translateX(-5px);
 }
 
 .sidebar__nav-item--dark:hover { background-color: rgba(255,255,255,0.05); }
@@ -239,12 +243,34 @@
     font-size: 0.9rem;
     transition: 0.2s;
     width: 100%;
+    text-align: start; /* RTL friendly */
 }
 
 .sidebar__theme-btn:hover { background-color: rgba(128,128,128,0.1); }
 .sidebar__logout:hover { background-color: rgba(255, 0, 0, 0.1); color: #ff4d4d; }
 
-/* Mobile Responsive */
+.sidebar__branch-details {
+    display: flex;
+    flex-direction: column;
+    margin-inline-start: 10px; /* RTL friendly margin */
+}
+
+.sidebar__user-role {
+    font-size: 0.7rem;
+    color: #888;
+    margin-top: 2px;
+    text-align: start; /* RTL friendly */
+}
+
+.sidebar__branch-selector.disabled {
+    cursor: default;
+    opacity: 0.8;
+}
+
+.sidebar__branch-selector.disabled:hover {
+    background-color: transparent;
+}
+
 @media (max-width: 768px) {
     .sidebar__close-btn { display: block; }
 }

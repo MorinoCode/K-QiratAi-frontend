@@ -1,25 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
 import './CustomersPage.css';
 import { 
     Users, Search, Plus, Edit, Trash2,  
-    X, Camera, Loader 
+    X, Camera, Loader, Upload 
 } from 'lucide-react';
 
 const CustomersPage = () => {
     const { theme } = useTheme();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     
     const [isFormOpen, setIsFormOpen] = useState(false);
-    
     const [isScanning, setIsScanning] = useState(false);
-    const [uploadedFile, setUploadedFile] = useState(null);
-    const fileInputRef = useRef(null);
+    
+    const [idFiles, setIdFiles] = useState({ front: null, back: null });
+    const frontInputRef = useRef(null);
+    const backInputRef = useRef(null);
 
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     
@@ -28,17 +31,18 @@ const CustomersPage = () => {
         nationality: 'Kuwaiti', gender: 'M', address: '', birth_date: '', expiry_date: ''
     });
 
-    const activeStoreId = localStorage.getItem('active_store_id') || 1;
+    const activeBranchId = localStorage.getItem('active_branch_id');
+    const activeBranchName = localStorage.getItem('active_branch_name') || t('all_branches');
 
     useEffect(() => {
         fetchCustomers();
-    }, [searchTerm]);
+    }, [searchTerm, activeBranchId]);
 
     const fetchCustomers = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/customers?store_id=${activeStoreId}&search=${searchTerm}`);
-            setCustomers(res.data);
+            const res = await api.get(`/customers?search=${searchTerm}&branch_id=${activeBranchId}`);
+            setCustomers(res.data.data || []);
             setLoading(false);
         } catch (err) {
             console.error(err);
@@ -46,11 +50,11 @@ const CustomersPage = () => {
         }
     };
 
-    const handleFileSelect = async (e) => {
+    const handleFileSelect = async (e, side) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        setUploadedFile(file); 
+        setIdFiles(prev => ({ ...prev, [side]: file }));
         await processOCR(file);
     };
 
@@ -65,22 +69,23 @@ const CustomersPage = () => {
             });
 
             if (res.data.success) {
-                const { civil_id, full_name, nationality, gender, birth_date, expiry_date } = res.data.data;
+                const data = res.data.data;
                 setFormData(prev => ({
                     ...prev,
-                    civil_id: civil_id || prev.civil_id,
-                    full_name: full_name || prev.full_name,
-                    nationality: nationality || prev.nationality,
-                    gender: gender || prev.gender,
-                    birth_date: birth_date || prev.birth_date,
-                    expiry_date: expiry_date || prev.expiry_date,
-                    notes: prev.notes + `\n[Auto-Scanned]`
+                    civil_id: data.civil_id || prev.civil_id,
+                    full_name: data.full_name || prev.full_name,
+                    nationality: data.nationality || prev.nationality,
+                    gender: data.gender ? (data.gender === 'F' ? 'F' : 'M') : prev.gender,
+                    birth_date: data.birth_date || prev.birth_date,
+                    expiry_date: data.expiry_date || prev.expiry_date,
+                    address: data.address || prev.address,
+                    notes: prev.notes + (prev.notes ? '\n' : '') + '[AI Scanned]'
                 }));
-                alert("ID Scanned Successfully! Extracted data applied.");
+                alert(t('id_scanned_success'));
             }
         } catch (err) {
             console.error(err);
-            alert("Scan failed. Please enter details manually.");
+            alert(t('scan_failed'));
         } finally {
             setIsScanning(false);
         }
@@ -91,18 +96,18 @@ const CustomersPage = () => {
         try {
             const payload = new FormData();
             Object.keys(formData).forEach(key => payload.append(key, formData[key]));
-            payload.append('store_id', activeStoreId);
             
-            if (uploadedFile) {
-                payload.append('id_card_image', uploadedFile);
-            }
+            if (activeBranchId) payload.append('branch_id', activeBranchId);
+            
+            if (idFiles.front) payload.append('front_image', idFiles.front);
+            if (idFiles.back) payload.append('back_image', idFiles.back);
 
             if (selectedCustomer) {
                 await api.put(`/customers/${selectedCustomer.id}`, payload, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
             } else {
-                await api.post('/customers', payload, {
+                await api.post('/customers/add', payload, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
             }
@@ -112,19 +117,23 @@ const CustomersPage = () => {
                 full_name: '', phone: '', civil_id: '', type: 'Regular', notes: '',
                 nationality: 'Kuwaiti', gender: 'M', address: '', birth_date: '', expiry_date: ''
             });
-            setUploadedFile(null);
+            setIdFiles({ front: null, back: null });
             setSelectedCustomer(null);
             fetchCustomers();
         } catch (err) {
-            alert("Error saving customer");
+            alert(err.response?.data?.message || t('error_saving_customer'));
         }
     };
 
     const handleDelete = async (id, e) => {
         e.stopPropagation();
-        if (!window.confirm("Are you sure?")) return;
-        try { await api.delete(`/customers/${id}`); fetchCustomers(); } 
-        catch (err) { alert(err.response?.data?.message || "Delete failed"); }
+        if (!window.confirm(t('confirm_delete_customer'))) return;
+        try { 
+            await api.delete(`/customers/${id}`); 
+            fetchCustomers(); 
+        } catch (err) { 
+            alert(err.response?.data?.message || t('delete_failed')); 
+        }
     };
 
     const openEdit = (customer, e) => {
@@ -133,8 +142,8 @@ const CustomersPage = () => {
         setFormData({
             full_name: customer.full_name,
             phone: customer.phone,
-            civil_id: customer.civil_id,
-            type: customer.type,
+            civil_id: customer.civil_id || '',
+            type: customer.type || 'Regular',
             notes: customer.notes || '',
             nationality: customer.nationality || '',
             gender: customer.gender || 'M',
@@ -142,138 +151,145 @@ const CustomersPage = () => {
             birth_date: customer.birth_date || '',
             expiry_date: customer.expiry_date || ''
         });
-        setUploadedFile(null);
+        setIdFiles({ front: null, back: null });
         setIsFormOpen(true);
-    };
-
-    const handleRowClick = (id) => {
-        navigate(`/customers/${id}`);
     };
 
     return (
         <div className={`customer-page customer-page--${theme}`}>
-            <header className="page-header">
-                <h1 className="page-title"><Users size={24}/> Customer Management</h1>
-                <button className="btn-add" onClick={() => { setSelectedCustomer(null); setIsFormOpen(true); }}>
-                    <Plus size={18}/> New Customer
-                </button>
+            <header className="customer-page__header">
+                <div className="customer-page__titles">
+                    <h1 className="customer-page__title"><Users size={24}/> {t('customer_management')}</h1>
+                    <p className="customer-page__subtitle">{activeBranchName}</p>
+                </div>
+                <div className="customer-page__actions">
+                    <button className="customer-btn customer-btn--primary" onClick={() => { setSelectedCustomer(null); setIsFormOpen(true); }}>
+                        <Plus size={18}/> {t('new_customer')}
+                    </button>
+                </div>
             </header>
 
-            <div className="controls-bar">
-                <div className="search-box">
-                    <Search size={18} className="icon"/>
+            <div className="customer-page__controls">
+                <div className="customer-search">
+                    <Search size={18} className="customer-search__icon"/>
                     <input 
-                        placeholder="Search Name, Phone, Civil ID..." 
+                        className="customer-search__input"
+                        placeholder={t('search_customer_placeholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
             </div>
 
-            <div className="table-wrapper">
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Phone</th>
-                            <th>Civil ID</th>
-                            <th>Type</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {customers.map(c => (
-                            <tr key={c.id} onClick={() => handleRowClick(c.id)} className="clickable-row">
-                                <td className="fw-bold">{c.full_name}</td>
-                                <td>{c.phone}</td>
-                                <td>{c.civil_id}</td>
-                                <td><span className={`badge-type ${c.type.toLowerCase()}`}>{c.type}</span></td>
-                                <td>
-                                    <div className="actions">
-                                        <button title="Edit" onClick={(e) => openEdit(c, e)}><Edit size={16}/></button>
-                                        <button title="Delete" className="text-red" onClick={(e) => handleDelete(c.id, e)}><Trash2 size={16}/></button>
-                                    </div>
-                                </td>
+            <div className="customer-table-container">
+                <div className="customer-table-wrapper">
+                    <table className="customer-table">
+                        <thead className="customer-table__head">
+                            <tr>
+                                <th>{t('name')}</th>
+                                <th>{t('phone')}</th>
+                                <th>{t('civil_id')}</th>
+                                <th>{t('type')}</th>
+                                <th>{t('actions')}</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="customer-table__body">
+                            {customers.map(c => (
+                                <tr key={c.id} onClick={() => navigate(`/customers/${c.id}`)} className="customer-row">
+                                    <td className="customer-row__cell customer-row__name" data-label={t('name')}>{c.full_name}</td>
+                                    <td className="customer-row__cell" data-label={t('phone')}>{c.phone}</td>
+                                    <td className="customer-row__cell" data-label={t('civil_id')}>{c.civil_id || '-'}</td>
+                                    <td className="customer-row__cell" data-label={t('type')}>
+                                        <span className={`customer-badge customer-badge--${c.type.toLowerCase()}`}>
+                                            {c.type}
+                                        </span>
+                                    </td>
+                                    <td className="customer-row__cell customer-row__actions-cell" data-label={t('actions')}>
+                                        <div className="customer-row__actions">
+                                            <button className="customer-action-btn" title={t('edit')} onClick={(e) => openEdit(c, e)}>
+                                                <Edit size={16}/>
+                                            </button>
+                                            <button className="customer-action-btn customer-action-btn--delete" title={t('delete')} onClick={(e) => handleDelete(c.id, e)}>
+                                                <Trash2 size={16}/>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {customers.length === 0 && !loading && (
+                                <tr><td colSpan="5" className="customer-empty">{t('no_customers_found')}</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {isFormOpen && (
-                <div className="modal-overlay">
-                    <div className={`modal-content modal--${theme}`}>
-                        <div className="modal-header">
-                            <h3>{selectedCustomer ? 'Edit Customer' : 'New Customer & Scan ID'}</h3>
-                            <button onClick={() => setIsFormOpen(false)}><X size={20}/></button>
+                <div className="customer-modal-overlay">
+                    <div className={`customer-modal customer-modal--${theme}`}>
+                        <div className="customer-modal__header">
+                            <h3>{selectedCustomer ? t('edit_customer') : t('new_customer_scan')}</h3>
+                            <button className="customer-modal__close" onClick={() => setIsFormOpen(false)}><X size={20}/></button>
                         </div>
                         
-                        <div className="scan-section">
-                            <p className="scan-label">Scan Civil ID (Front/Back) for Auto-fill:</p>
-                            <div className="scan-buttons">
-                                <input 
-                                    type="file" 
-                                    ref={fileInputRef} 
-                                    style={{display: 'none'}} 
-                                    accept="image/*" 
-                                    capture="environment"
-                                    onChange={handleFileSelect}
-                                />
-                                
-                                <button 
-                                    type="button" 
-                                    className="btn-scan" 
-                                    onClick={() => fileInputRef.current.click()}
-                                    disabled={isScanning}
-                                >
-                                    {isScanning ? <Loader className="spin" size={20}/> : <Camera size={20}/>}
-                                    {isScanning ? 'Processing AI...' : 'Take Photo / Upload ID'}
+                        <div className="customer-scan-section">
+                            <p className="customer-scan__label">{t('upload_civil_id')}</p>
+                            <div className="customer-scan__buttons">
+                                <input type="file" ref={frontInputRef} style={{display:'none'}} accept="image/*" onChange={(e) => handleFileSelect(e, 'front')} />
+                                <button type="button" className={`customer-scan-btn ${idFiles.front ? 'customer-scan-btn--done' : ''}`} onClick={() => frontInputRef.current.click()} disabled={isScanning}>
+                                    {isScanning ? <Loader className="customer-spin" size={18}/> : <Camera size={18}/>}
+                                    {idFiles.front ? t('front_uploaded') : t('scan_front')}
+                                </button>
+
+                                <input type="file" ref={backInputRef} style={{display:'none'}} accept="image/*" onChange={(e) => handleFileSelect(e, 'back')} />
+                                <button type="button" className={`customer-scan-btn ${idFiles.back ? 'customer-scan-btn--done' : ''}`} onClick={() => backInputRef.current.click()} disabled={isScanning}>
+                                    {isScanning ? <Loader className="customer-spin" size={18}/> : <Upload size={18}/>}
+                                    {idFiles.back ? t('back_uploaded') : t('scan_back')}
                                 </button>
                             </div>
-                            {uploadedFile && <div className="file-preview">Image Ready to Save</div>}
                         </div>
 
-                        <form onSubmit={handleSave} className="modal-form">
-                            <input className="input-field" placeholder="Full Name" required 
+                        <form onSubmit={handleSave} className="customer-form">
+                            <input className="customer-form__input" placeholder={t('full_name')} required 
                                 value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} />
                             
-                            <div className="row-2">
-                                <input className="input-field" placeholder="Phone" required 
+                            <div className="customer-form__row">
+                                <input className="customer-form__input" placeholder={t('phone')} required 
                                     value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                                <input className="input-field" placeholder="Civil ID" 
+                                <input className="customer-form__input" placeholder={t('civil_id')} 
                                     value={formData.civil_id} onChange={e => setFormData({...formData, civil_id: e.target.value})} />
                             </div>
 
-                            <div className="row-2">
-                                <select className="input-field" value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
-                                    <option value="M">Male</option>
-                                    <option value="F">Female</option>
+                            <div className="customer-form__row">
+                                <select className="customer-form__input" value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
+                                    <option value="M">{t('male')}</option>
+                                    <option value="F">{t('female')}</option>
                                 </select>
-                                <input className="input-field" placeholder="Nationality" 
+                                <input className="customer-form__input" placeholder={t('nationality')} 
                                     value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} />
                             </div>
 
-                            <div className="row-2">
-                                <input className="input-field" placeholder="Birth Date" 
+                            <div className="customer-form__row">
+                                <input className="customer-form__input" placeholder={t('birth_date')} 
                                     value={formData.birth_date} onChange={e => setFormData({...formData, birth_date: e.target.value})} />
-                                <input className="input-field" placeholder="Expiry Date" 
+                                <input className="customer-form__input" placeholder={t('expiry_date')} 
                                     value={formData.expiry_date} onChange={e => setFormData({...formData, expiry_date: e.target.value})} />
                             </div>
 
-                            <input className="input-field" placeholder="Address" 
+                            <input className="customer-form__input" placeholder={t('address')} 
                                 value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
 
-                            <select className="input-field" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+                            <select className="customer-form__input" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
                                 <option value="Regular">Regular</option>
                                 <option value="VIP">VIP</option>
                                 <option value="Wholesaler">Wholesaler</option>
                             </select>
 
-                            <textarea className="input-field" placeholder="Notes..." rows="2"
+                            <textarea className="customer-form__input customer-form__input--textarea" placeholder={t('notes')} rows="2"
                                 value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} />
 
-                            <button type="submit" className="btn-submit" disabled={isScanning}>
-                                {isScanning ? 'Wait for AI...' : 'Save & Close'}
+                            <button type="submit" className="customer-btn customer-btn--submit" disabled={isScanning}>
+                                {isScanning ? t('wait_ai') : t('save_customer')}
                             </button>
                         </form>
                     </div>

@@ -1,3 +1,4 @@
+// src/App.js
 import React, { useEffect } from 'react';
 import "./App.css"
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -18,15 +19,18 @@ import StaffDetailsPage from './pages/staffDetailsPage/StaffDetailsPage';
 import CustomerDetailsPage from './pages/customerDetailPage/CustomerDetailPage';
 import { useTranslation } from 'react-i18next';
 
-
 function App() {
-  // درون کامپوننت App یا Layout اصلی:
-const { i18n } = useTranslation();
+  const { i18n } = useTranslation();
 
-useEffect(() => {
-  document.body.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
-  document.body.className = i18n.language === 'ar' ? 'font-arabic' : 'font-english';
-}, [i18n.language]);
+  useEffect(() => {
+    // Set direction
+    document.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+    document.body.dir = i18n.language === 'ar' ? 'rtl' : 'ltr'; // Ensure body gets it too
+    
+    // Set font class
+    document.body.classList.remove('font-arabic', 'font-english');
+    document.body.classList.add(i18n.language === 'ar' ? 'font-arabic' : 'font-english');
+  }, [i18n.language]);
 
   return (
     <Router>

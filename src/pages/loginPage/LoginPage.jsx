@@ -1,45 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
 import './LoginPage.css';
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { theme } = useTheme();
-    const [credentials, setCredentials] = useState({ username: '', password: '' });
+    const { t } = useTranslation();
+
+    const [credentials, setCredentials] = useState({ 
+        storeId: '', 
+        username: '', 
+        password: '' 
+    });
     const [errors, setErrors] = useState({ password: '', server: '' });
     const [isFormValid, setIsFormValid] = useState(false);
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    useEffect(() => {
+        if (location.state?.tenantId) {
+            setCredentials(prev => ({ ...prev, storeId: location.state.tenantId }));
+        }
+    }, [location.state]);
 
-    // useEffect(() => {
-    //     const isUserValid = credentials.username.trim().length >= 3;
-    //     const isPassValid = passwordRegex.test(credentials.password);
-    //     setIsFormValid(isUserValid && isPassValid);
-        
-    //     if (credentials.password.length > 0 && !isPassValid) {
-    //         setErrors(prev => ({ ...prev, password: 'Required: 8+ chars, Upper, Lower, Num, Symbol.' }));
-    //     } else {
-    //         setErrors(prev => ({ ...prev, password: '' }));
-    //     }
-    // }, [credentials]);
+    useEffect(() => {
+        const isValid = 
+            credentials.storeId.trim().length > 0 && 
+            credentials.username.trim().length > 0 && 
+            credentials.password.length > 0;
+        setIsFormValid(isValid);
+    }, [credentials]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        // if (!isFormValid) return;
-
+        
         try {
+            const config = {
+                headers: {
+                    'x-tenant-id': credentials.storeId
+                }
+            };
+
             const response = await api.post('/auth/login', {
                 username: credentials.username,
                 password: credentials.password
-            });
+            }, config);
 
             console.log("Login Success:", response.data);
+
+            localStorage.setItem('tenant_id', credentials.storeId);
+            
+            if (response.data.token) {
+               // localStorage.setItem('token', response.data.token); 
+            }
+
             navigate('/dashboard');
         } catch (err) {
             console.error("Login Error:", err);
-            const serverError = err.response?.data?.message || "Invalid Username or Password";
+            const serverError = err.response?.data?.message || t('invalid_credentials');
             setErrors(prev => ({ ...prev, server: serverError }));
         }
     };
@@ -47,24 +67,37 @@ const LoginPage = () => {
     return (
         <div className={`login-page login-page--${theme}`}>
             <div className={`login-card login-card--${theme}`}>
-                <div className={`login-card__kuwait-strip login-card__kuwait-strip--${theme}`}>
-                    <div className={`login-card__strip-item login-card__strip-item--green`}></div>
-                    <div className={`login-card__strip-item login-card__strip-item--white`}></div>
-                    <div className={`login-card__strip-item login-card__strip-item--red`}></div>
+                <div className="login-card__kuwait-strip">
+                    <div className="login-card__strip-item login-card__strip-item--green"></div>
+                    <div className="login-card__strip-item login-card__strip-item--white"></div>
+                    <div className="login-card__strip-item login-card__strip-item--red"></div>
                 </div>
                 
                 <header className={`login-card__header login-card__header--${theme}`}>
-                    <h1 className={`login-card__title login-card__title--${theme}`}>K-QIRAT</h1>
+                    <h1 className={`login-card__title login-card__title--${theme}`}>{t('app_title')}</h1>
                     <p className={`login-card__subtitle login-card__subtitle--${theme}`}>SECURE GOLD PORTAL | KUWAIT</p>
                 </header>
 
                 <form className={`login-card__form login-card__form--${theme}`} onSubmit={handleLogin}>
+                    
                     <div className={`login-card__form-group login-card__form-group--${theme}`}>
-                        <label className={`login-card__label login-card__label--${theme}`}>Store ID / Username</label>
+                        <label className={`login-card__label login-card__label--${theme}`}>{t('store_id')}</label>
                         <input 
                             className={`login-card__input login-card__input--${theme}`}
                             type="text" 
-                            placeholder="Enter username"
+                            placeholder="e.g. royal-gold"
+                            value={credentials.storeId}
+                            onChange={(e) => setCredentials({...credentials, storeId: e.target.value})}
+                            required
+                        />
+                    </div>
+
+                    <div className={`login-card__form-group login-card__form-group--${theme}`}>
+                        <label className={`login-card__label login-card__label--${theme}`}>{t('username')}</label>
+                        <input 
+                            className={`login-card__input login-card__input--${theme}`}
+                            type="text" 
+                            placeholder={t('enter_username')}
                             value={credentials.username}
                             onChange={(e) => setCredentials({...credentials, username: e.target.value})}
                             required
@@ -72,7 +105,7 @@ const LoginPage = () => {
                     </div>
                     
                     <div className={`login-card__form-group login-card__form-group--${theme}`}>
-                        <label className={`login-card__label login-card__label--${theme}`}>Password</label>
+                        <label className={`login-card__label login-card__label--${theme}`}>{t('password')}</label>
                         <input 
                             className={`login-card__input ${errors.password ? 'login-card__input--error' : ''} login-card__input--${theme}`}
                             type="password" 
@@ -81,15 +114,10 @@ const LoginPage = () => {
                             onChange={(e) => setCredentials({...credentials, password: e.target.value})}
                             required
                         />
-                        {errors.password && (
-                            <span className={`login-card__error-msg login-card__error-msg--${theme}`}>
-                                {errors.password}
-                            </span>
-                        )}
                     </div>
 
                     {errors.server && (
-                        <div className="login-card__error-msg login-card__error-msg--server" style={{textAlign: 'center', marginBottom: '10px'}}>
+                        <div className="login-card__error-msg">
                             {errors.server}
                         </div>
                     )}
@@ -97,18 +125,18 @@ const LoginPage = () => {
                     <button 
                         type="submit" 
                         className={`login-card__submit-btn ${!isFormValid ? 'login-card__submit-btn--disabled' : ''} login-card__submit-btn--${theme}`}
-                        // disabled={!isFormValid}
+                        disabled={!isFormValid}
                     >
-                        SECURE LOGIN
+                        {t('secure_login')}
                     </button>
 
-                    <footer className="login-card__footer" style={{textAlign: 'center', marginTop: '15px'}}>
+                    <footer className="login-card__footer">
                          <button 
                             type="button" 
-                            style={{background: 'none', border: 'none', color: theme === 'dark' ? '#D4AF37' : '#B8860B', cursor: 'pointer', fontSize: '0.85rem'}}
+                            className={`login-card__signup-btn login-card__signup-btn--${theme}`}
                             onClick={() => navigate('/signup')}
                         >
-                            Don't have an account? Sign Up
+                            {t('dont_have_account')} {t('sign_up')}
                         </button>
                     </footer>
                 </form>

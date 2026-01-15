@@ -1,61 +1,103 @@
 import React from 'react';
-import { Printer, Edit, Trash2, ChevronRight } from 'lucide-react';
+import { Printer, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import './InventoryItem.css';
 
-const InventoryItem = ({ item, calculateLivePrice, calculateProfit, theme }) => {
+const InventoryItem = ({ item, calculateLivePrice, calculateProfit, onDelete, theme }) => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
+    const API_URL = 'http://localhost:5000';
 
-    // رفتن به صفحه جزئیات
     const handleRowClick = () => {
         navigate(`/inventory/item/${item.id}`);
     };
 
-    // جلوگیری از اینکه وقتی دکمه حذف را می‌زنیم، وارد صفحه جزئیات شود
-    const handleActionClick = (e, action) => {
+    const handleEdit = (e) => {
         e.stopPropagation();
-        action();
+        navigate(`/inventory/item/${item.id}`);
     };
 
+    const handleDelete = (e) => {
+        e.stopPropagation();
+        onDelete(item.id);
+    };
+
+    const handlePrint = (e) => {
+        e.stopPropagation();
+        alert(t('print_coming_soon'));
+    };
+
+    const getImageUrl = (url) => {
+        if (!url) return 'https://via.placeholder.com/50?text=No+Img';
+        if (url.startsWith('http')) return url;
+        return `${API_URL}${url}`;
+    };
+
+    const thumbnail = (item.images && item.images.length > 0) 
+        ? getImageUrl(item.images[0])
+        : 'https://via.placeholder.com/50?text=No+Img';
+
+    const livePrice = calculateLivePrice(item);
+    const profit = calculateProfit(item);
+    const isProfitPositive = parseFloat(profit) >= 0;
+
     return (
-        <tr className={`inventory-table__row inventory-table__row--${theme}`} onClick={handleRowClick}>
-            <td>
-                <div className="item-img-wrapper">
+        <tr className={`inventory-row inventory-row--${theme}`} onClick={handleRowClick}>
+            <td className="inventory-row__cell inventory-row__cell--image">
+                <div className="inventory-row__img-wrapper">
                     <img 
-                        src={`http://localhost:5000/api/gold/image/${item.id}`} 
+                        src={thumbnail} 
                         alt={item.item_name}
-                        onError={(e) => {e.target.src = 'https://via.placeholder.com/50?text=Gold'}} 
+                        className="inventory-row__img"
+                        onError={(e) => {e.target.src = 'https://via.placeholder.com/50?text=Error'}} 
                     />
                 </div>
             </td>
-            <td>
-                <div className="item-info">
-                    <span className="item-name">{item.item_name}</span>
-                    <span className="item-barcode">{item.barcode}</span>
-                    <span className="item-category-tag">{item.category}</span> {/* نمایش دسته‌بندی */}
+            <td className="inventory-row__cell inventory-row__cell--info">
+                <div className="inventory-row__info">
+                    <span className="inventory-row__name">{item.item_name}</span>
+                    <div className="inventory-row__meta">
+                        <span className="inventory-row__barcode">{item.barcode}</span>
+                        <span className="inventory-row__separator">•</span>
+                        <span className="inventory-row__category">{item.category}</span>
+                    </div>
                 </div>
             </td>
-            <td><span className={`badge-karat k${item.karat}`}>{item.karat}K</span></td>
-            <td>{item.weight} g</td>
-            <td className="text-muted">{parseFloat(item.buy_price_per_gram).toFixed(3)}</td>
-            <td className="text-bold">{calculateLivePrice(item)}</td>
-            <td>
-                <span className={`profit-val ${calculateProfit(item) >= 0 ? 'pos' : 'neg'}`}>
-                    {calculateProfit(item)}
+            <td className="inventory-row__cell inventory-row__cell--metal" data-label={t('metal_type')}>
+                {item.metal_type}
+            </td>
+            <td className="inventory-row__cell inventory-row__cell--karat" data-label={t('karat')}>
+                <span className={`inventory-row__badge inventory-row__badge--${item.karat}k`}>
+                    {item.karat}K
                 </span>
             </td>
-            <td>
-                <div className="action-buttons">
-                    <button onClick={(e) => handleActionClick(e, () => alert('Print'))} title="Print Barcode">
+            <td className="inventory-row__cell inventory-row__cell--weight" data-label={t('weight')}>
+                {item.weight} <small>g</small>
+            </td>
+            <td className="inventory-row__cell inventory-row__cell--qty" data-label={t('quantity')}>
+                {item.quantity}
+            </td>
+            <td className="inventory-row__cell inventory-row__cell--cost" data-label={t('cost_price')}>
+                {parseFloat(item.buy_price_per_gram).toFixed(3)}
+            </td>
+            <td className="inventory-row__cell inventory-row__cell--live" data-label={t('live_price')}>
+                <span className="inventory-row__live-price">{livePrice}</span>
+            </td>
+            <td className="inventory-row__cell inventory-row__cell--profit" data-label={t('profit')}>
+                <span className={`inventory-row__profit ${isProfitPositive ? 'inventory-row__profit--pos' : 'inventory-row__profit--neg'}`}>
+                    {profit}
+                </span>
+            </td>
+            <td className="inventory-row__cell inventory-row__cell--actions">
+                <div className="inventory-row__actions-group">
+                    <button className="inventory-row__action-btn inventory-row__action-btn--print" onClick={handlePrint} title={t('print_barcode')}>
                         <Printer size={16} />
                     </button>
-                    <button onClick={(e) => handleActionClick(e, () => alert('Edit'))} title="Edit">
+                    <button className="inventory-row__action-btn inventory-row__action-btn--edit" onClick={handleEdit} title={t('edit')}>
                         <Edit size={16} />
                     </button>
-                    <button 
-                        onClick={(e) => handleActionClick(e, () => alert('Delete logic here'))} 
-                        title="Delete" 
-                        className="btn-delete"
-                    >
+                    <button className="inventory-row__action-btn inventory-row__action-btn--delete" onClick={handleDelete} title={t('delete')}>
                         <Trash2 size={16} />
                     </button>
                 </div>

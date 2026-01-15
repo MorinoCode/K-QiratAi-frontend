@@ -1,20 +1,34 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
-import Backend from 'i18next-http-backend';
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+
+// ایمپورت مستقیم فایل‌های JSON از پوشه src/locales
+// مطمئن شو که مسیر فایل‌ها دقیقا همین است
+import translationEN from "../public/locales/en/translation.json";
+import translationAR from "../public/locales/ar/translation.json";
+
+// تعریف منابع (Resources)
+const resources = {
+  en: {
+    translation: translationEN,
+  },
+  ar: {
+    translation: translationAR,
+  },
+};
 
 i18n
-  .use(Backend) // لود کردن فایل‌های ترجمه از public
-  .use(LanguageDetector) // تشخیص زبان کاربر
-  .use(initReactI18next)
+  .use(initReactI18next) // اتصال i18next به React
   .init({
-    fallbackLng: 'en',
-    debug: false,
+    resources, // فایل‌های ترجمه که بالا ایمپورت کردیم
+    lng: "en", // زبان پیش‌فرض (می‌توانی به 'ar' تغییر دهی)
+    fallbackLng: "en", // اگر ترجمه‌ای پیدا نشد، انگلیسی نشان بده
+    
     interpolation: {
-      escapeValue: false, // ری‌اکت خودش XSS را هندل می‌کند
+      escapeValue: false, // React خودش جلوی XSS را می‌گیرد
     },
-    backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
+    
+    react: {
+        useSuspense: false // جلوگیری از ارورهای لودینگ ناخواسته
     }
   });
 

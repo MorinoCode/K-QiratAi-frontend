@@ -53,18 +53,26 @@ const SignupPage = () => {
         e.preventDefault();
         if (!isFormValid) return;
 
+        // نگاشت اطلاعات به فرمت جدید بک‌اند
         const payload = {
-            store_name: formData.storeName,
-            username: formData.username,
-            full_name: formData.fullName,
+            store_name: formData.storeName.trim().toLowerCase(),
+            username: formData.username.trim().toLowerCase(),
+            owner_name: formData.fullName.trim().toLowerCase(), 
             phone: formData.phone,
             password: formData.password
         };
 
         try {
-            await api.post('/auth/signup', payload);
-            alert("Store Registered Successfully!");
-            navigate('/login');
+            // تغییر آدرس به پلتفرم رجیستر
+            const res = await api.post('/platform/register', payload);
+            
+            // نمایش شناسه فروشگاه به کاربر (بسیار مهم)
+            const tenantId = res.data.tenant_id;
+            alert(`Store Registered Successfully!\n\nIMPORTANT: Your Store ID is: "${tenantId}"\nPlease save it for login.`);
+            
+            // انتقال شناسه فروشگاه به صفحه لاگین برای راحتی کاربر
+            navigate('/login', { state: { tenantId } });
+
         } catch (err) {
             console.error("Signup Error:", err);
             const serverError = err.response?.data?.error || err.response?.data?.message || "Registration failed.";
@@ -100,7 +108,7 @@ const SignupPage = () => {
                     </div>
 
                     <div className={`signup-card__form-group signup-card__form-group--${theme}`}>
-                        <label className={`signup-card__label signup-card__label--${theme}`}>Admin Name</label>
+                        <label className={`signup-card__label signup-card__label--${theme}`}>Owner Name</label>
                         <input 
                             name="fullName"
                             className={`signup-card__input signup-card__input--${theme}`}

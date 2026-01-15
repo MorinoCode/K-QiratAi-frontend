@@ -1,132 +1,209 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
-import './CustomerDetailsPage.css';
+import './CustomerDetailPage.css';
 import { 
-    User, ArrowLeft, Calendar, MapPin, 
-    CreditCard, TrendingUp, ShoppingBag 
+    User, ArrowLeft, MapPin, TrendingUp, ShoppingBag, CreditCard, Download 
 } from 'lucide-react';
 
 const CustomerDetailsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    
+    const API_BASE_URL = 'http://localhost:5000';
 
     useEffect(() => {
         const fetchDetails = async () => {
             try {
                 const res = await api.get(`/customers/${id}`);
-                setData(res.data);
+                setData(res.data.data);
                 setLoading(false);
             } catch (err) {
                 console.error(err);
-                alert("Customer not found");
+                alert(t('customer_not_found'));
                 navigate('/customers');
             }
         };
         fetchDetails();
-    }, [id, navigate]);
+    }, [id, navigate, t]);
 
-    if (loading) return <div className={`cust-details-page cust-details-page--${theme} loading`}>Loading...</div>;
+    const getImageUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        return `${API_BASE_URL}${url}`;
+    };
+
+    const handleDownloadInvoice = (invoice) => {
+        // Safe branch name logic or fetch from invoice if available
+        const safeBranch = 'Main-Branch'; 
+        const fileName = `INV-${safeBranch}-${invoice.invoice_number}.pdf`;
+        const url = `${API_BASE_URL}/uploads/invoices/${fileName}`;
+        window.open(url, '_blank');
+    };
+
+    if (loading) return (
+        <div className={`cust-details-page cust-details-page--${theme} cust-details-page--loading`}>
+            {t('loading')}
+        </div>
+    );
 
     const { customer, history, stats } = data;
 
     return (
         <div className={`cust-details-page cust-details-page--${theme}`}>
-            <header className="page-header">
-                <button className="btn-back" onClick={() => navigate('/customers')}>
-                    <ArrowLeft size={20}/> Back
+            <header className="cust-details-header">
+                <button className="cust-details-back" onClick={() => navigate('/customers')}>
+                    <ArrowLeft size={20}/> {t('back')}
                 </button>
-                <h1>{customer.full_name}</h1>
-                <span className={`badge-type ${customer.type.toLowerCase()}`}>{customer.type}</span>
+                <div className="cust-details-title-row">
+                    <h1 className="cust-details-name">{customer.full_name}</h1>
+                    <span className={`cust-details-badge cust-details-badge--${customer.type.toLowerCase()}`}>
+                        {customer.type}
+                    </span>
+                </div>
             </header>
 
-            <div className="details-grid">
-                {/* Left: Profile Card & ID Image */}
-                <div className="left-col">
-                    <div className="profile-card">
-                        <div className="profile-avatar">
+            <div className="cust-details-grid">
+                {/* Left Column */}
+                <div className="cust-details-col-left">
+                    <div className="cust-profile-card">
+                        <div className="cust-profile-avatar">
                             <User size={40}/>
                         </div>
-                        <div className="profile-info">
-                            <h3>{customer.civil_id}</h3>
-                            <p><span className="label">Phone:</span> {customer.phone}</p>
-                            <p><span className="label">Nation:</span> {customer.nationality}</p>
-                            <p><span className="label">Gender:</span> {customer.gender === 'M' ? 'Male' : 'Female'}</p>
-                            <p><span className="label">DOB:</span> {customer.birth_date || '-'}</p>
-                            <p><span className="label">Expiry:</span> {customer.expiry_date || '-'}</p>
-                            <div className="address-box">
-                                <MapPin size={14}/> {customer.address || 'No Address'}
+                        <div className="cust-profile-info">
+                            <h3 className="cust-profile-civil">{customer.civil_id || t('no_civil_id')}</h3>
+                            <div className="cust-profile-row">
+                                <span className="cust-label">{t('phone')}:</span> {customer.phone}
+                            </div>
+                            <div className="cust-profile-row">
+                                <span className="cust-label">{t('nationality')}:</span> {customer.nationality}
+                            </div>
+                            <div className="cust-profile-row">
+                                <span className="cust-label">{t('gender')}:</span> {customer.gender === 'M' ? t('male') : t('female')}
+                            </div>
+                            <div className="cust-profile-row">
+                                <span className="cust-label">{t('dob')}:</span> {customer.birth_date || '-'}
+                            </div>
+                            <div className="cust-profile-row">
+                                <span className="cust-label">{t('expiry')}:</span> {customer.expiry_date || '-'}
+                            </div>
+                            <div className="cust-profile-address">
+                                <MapPin size={14}/> {customer.address || t('no_address')}
                             </div>
                         </div>
                     </div>
 
-                    <div className="id-card-preview">
-                        <h4>Stored ID Card</h4>
-                        <img 
-                            src={`http://localhost:5000/api/customers/image/${customer.id}`} 
-                            alt="Civil ID" 
-                            onError={(e) => e.target.src = 'https://via.placeholder.com/300x180?text=No+ID+Image'}
-                        />
+                    <div className="cust-id-card-box">
+                        <div className="cust-id-header">
+                            <CreditCard size={16}/> {t('stored_id_cards')}
+                        </div>
+                        
+                        <div className="cust-id-image-wrapper">
+                            <span className="cust-id-label">{t('front_id')}</span>
+                            {customer.id_card_front_url ? (
+                                <img 
+                                    src={getImageUrl(customer.id_card_front_url)} 
+                                    alt="Front ID" 
+                                    className="cust-id-img"
+                                    onError={(e) => e.target.src = 'https://via.placeholder.com/300x180?text=Error'}
+                                />
+                            ) : <div className="cust-id-placeholder">{t('no_front_image')}</div>}
+                        </div>
+
+                        <div className="cust-id-image-wrapper">
+                            <span className="cust-id-label">{t('back_id')}</span>
+                            {customer.id_card_back_url ? (
+                                <img 
+                                    src={getImageUrl(customer.id_card_back_url)} 
+                                    alt="Back ID" 
+                                    className="cust-id-img"
+                                    onError={(e) => e.target.src = 'https://via.placeholder.com/300x180?text=Error'}
+                                />
+                            ) : <div className="cust-id-placeholder">{t('no_back_image')}</div>}
+                        </div>
                     </div>
                 </div>
 
-                {/* Right: AI Analysis & History */}
-                <div className="right-col">
-                    <div className="ai-dashboard">
-                        <div className="ai-header">
-                            <TrendingUp size={20}/> <span>AI Shopping Insights</span>
+                {/* Right Column */}
+                <div className="cust-details-col-right">
+                    <div className="cust-ai-dashboard">
+                        <div className="cust-ai-header">
+                            <TrendingUp size={20}/> <span>{t('ai_shopping_insights')}</span>
                         </div>
-                        <div className="ai-stats-row">
-                            <div className="ai-stat">
-                                <span className="label">Total Spent</span>
-                                <span className="value">{stats.total_spent} KWD</span>
+                        <div className="cust-ai-stats">
+                            <div className="cust-ai-stat-box">
+                                <span className="cust-stat-label">{t('total_spent')}</span>
+                                <span className="cust-stat-value">
+                                    {stats.total_spent} <small>{t('kwd')}</small>
+                                </span>
                             </div>
-                            <div className="ai-stat">
-                                <span className="label">Transactions</span>
-                                <span className="value">{stats.invoice_count}</span>
+                            <div className="cust-ai-stat-box">
+                                <span className="cust-stat-label">{t('transactions')}</span>
+                                <span className="cust-stat-value">{stats.invoice_count}</span>
                             </div>
-                            <div className="ai-stat">
-                                <span className="label">Last Visit</span>
-                                <span className="value">{stats.last_purchase ? new Date(stats.last_purchase).toLocaleDateString() : 'Never'}</span>
+                            <div className="cust-ai-stat-box">
+                                <span className="cust-stat-label">{t('last_visit')}</span>
+                                <span className="cust-stat-value">
+                                    {stats.last_purchase ? new Date(stats.last_purchase).toLocaleDateString() : t('never')}
+                                </span>
                             </div>
                         </div>
-                        <div className="ai-prediction">
-                            <p>🤖 <strong>AI Analysis:</strong> 
-                                {stats.invoice_count > 2 
-                                ? "Frequent buyer. Prefers 21K items. Likely to buy during holidays." 
-                                : "New customer. Needs engagement."}
+                        <div className="cust-ai-prediction">
+                            <p>🤖 <strong>{t('ai_analysis')}:</strong> 
+                                {parseInt(stats.invoice_count) > 2 
+                                ? t('ai_frequent_buyer') 
+                                : t('ai_new_customer')}
                             </p>
                         </div>
                     </div>
 
-                    <div className="history-section">
-                        <h3><ShoppingBag size={18}/> Purchase History</h3>
-                        <div className="table-wrapper">
-                            <table className="history-table">
+                    <div className="cust-history-section">
+                        <h3 className="cust-history-title">
+                            <ShoppingBag size={18}/> {t('purchase_history')}
+                        </h3>
+                        <div className="cust-history-wrapper">
+                            <table className="cust-history-table">
                                 <thead>
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Invoice #</th>
-                                        <th>Items</th>
-                                        <th>Total</th>
-                                        <th>Pay</th>
+                                        <th>{t('date')}</th>
+                                        <th>{t('invoice_no')}</th>
+                                        <th>{t('items')}</th>
+                                        <th>{t('total')}</th>
+                                        <th>{t('action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {history.map(inv => (
-                                        <tr key={inv.id}>
+                                        <tr 
+                                            key={inv.id} 
+                                            onClick={() => handleDownloadInvoice(inv)} 
+                                            className="cust-history-row clickable"
+                                            title={t('click_download')}
+                                        >
                                             <td>{new Date(inv.createdAt).toLocaleDateString()}</td>
                                             <td>{inv.invoice_number}</td>
                                             <td>{inv.items?.length || 0}</td>
-                                            <td className="text-gold">{inv.total_amount}</td>
-                                            <td>{inv.payment_method}</td>
+                                            <td className="cust-text-gold">{inv.total_amount} {t('kwd')}</td>
+                                            <td>
+                                                <button className="cust-download-btn">
+                                                    <Download size={16}/> PDF
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
-                                    {history.length === 0 && <tr><td colspan="5" style={{textAlign:'center'}}>No purchases yet.</td></tr>}
+                                    {history.length === 0 && (
+                                        <tr>
+                                            <td colSpan="5" className="cust-history-empty">
+                                                {t('no_purchases_yet')}
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
