@@ -1,12 +1,10 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
-// ایمپورت مستقیم فایل‌های JSON از پوشه src/locales
-// مطمئن شو که مسیر فایل‌ها دقیقا همین است
-import translationEN from "../public/locales/en/translation.json";
-import translationAR from "../public/locales/ar/translation.json";
 
-// تعریف منابع (Resources)
+import translationEN from "./locales/en/translation.json";
+import translationAR from "./locales/ar/translation.json";
+
 const resources = {
   en: {
     translation: translationEN,
@@ -17,19 +15,19 @@ const resources = {
 };
 
 i18n
-  .use(initReactI18next) // اتصال i18next به React
+  .use(initReactI18next) 
   .init({
-    resources, // فایل‌های ترجمه که بالا ایمپورت کردیم
-    lng: "en", // زبان پیش‌فرض (می‌توانی به 'ar' تغییر دهی)
-    fallbackLng: "en", // اگر ترجمه‌ای پیدا نشد، انگلیسی نشان بده
-    
+    resources, 
+    lng: "en", 
+    fallbackLng: "en",
+
     interpolation: {
-      escapeValue: false, // React خودش جلوی XSS را می‌گیرد
+      escapeValue: false, 
     },
-    
+
     react: {
-        useSuspense: false // جلوگیری از ارورهای لودینگ ناخواسته
-    }
+      useSuspense: false, 
+    },
   });
 
 export default i18n;

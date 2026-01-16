@@ -251,5 +251,12 @@
   "invoice_created": "تم إنشاء الفاتورة!",
   "transaction_saved_msg": "تم حفظ المعاملة رقم {{number}} بنجاح.",
   "close": "إغلاق",
-  "print_pdf": "طباعة PDF"
+  "print_pdf": "طباعة PDF",
+  "total_revenue": "إجمالي الإيرادات",
+  "search_invoice_placeholder": "بحث برقم الفاتورة، العميل...",
+  "total_amount": "المبلغ الإجمالي",
+  "payment_method": "طريقة الدفع",
+  "download_pdf": "تحميل PDF",
+  "no_invoices_found": "لم يتم العثور على فواتير.",
+  "view": "عرض"
 }

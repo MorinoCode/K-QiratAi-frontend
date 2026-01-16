@@ -1,0 +1,134 @@
+.invoices-page {
+    padding: 30px;
+    height: 100vh;
+    overflow-y: auto;
+    font-family: 'Inter', sans-serif;
+}
+
+.invoices-page--dark { background: #0a0a0a; color: #fff; }
+.invoices-page--light { background: #f8f9fa; color: #333; }
+
+/* Header */
+.invoices-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.invoices-header__titles { display: flex; flex-direction: column; }
+
+.invoices-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1.8rem; font-weight: 800; margin: 0;
+}
+.invoices-icon { color: #d4af37; }
+.invoices-subtitle { margin: 5px 0 0; opacity: 0.7; font-size: 0.9rem; }
+
+.invoices-stats { display: flex; gap: 15px; }
+
+.invoices-stat-box {
+    background: rgba(128, 128, 128, 0.1);
+    padding: 10px 16px; border-radius: 12px;
+    font-size: 0.9rem; border: 1px solid rgba(128, 128, 128, 0.2);
+    display: flex; flex-direction: column; align-items: center; min-width: 100px;
+}
+
+.invoices-stat-box--gold {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.3);
+    color: #d4af37;
+}
+
+.invoices-stat-box span { font-size: 0.75rem; opacity: 0.8; margin-bottom: 4px; }
+.invoices-stat-box strong { font-size: 1.1rem; }
+
+/* Controls */
+.invoices-controls {
+    display: flex; gap: 15px; margin-bottom: 24px; flex-wrap: wrap;
+}
+
+.invoices-search {
+    flex: 1; min-width: 250px; display: flex; align-items: center;
+    background: rgba(128,128,128,0.08);
+    border: 1px solid rgba(128,128,128,0.2);
+    padding: 12px 16px; border-radius: 12px;
+}
+
+.invoices-search__icon { opacity: 0.5; margin-inline-end: 10px; }
+.invoices-search__input {
+    background: transparent; border: none; outline: none;
+    color: inherit; width: 100%; font-size: 0.95rem;
+}
+
+.invoices-filter {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(128,128,128,0.08);
+    border: 1px solid rgba(128,128,128,0.2);
+    padding: 12px 16px; border-radius: 12px;
+}
+
+.invoices-filter__input {
+    background: transparent; border: none; outline: none;
+    color: inherit; font-family: inherit; cursor: pointer;
+}
+
+.invoices-filter__clear {
+    background: none; border: none; color: inherit; cursor: pointer; opacity: 0.6;
+}
+.invoices-filter__clear:hover { opacity: 1; color: #ff4d4d; }
+
+/* Table */
+.invoices-table-container {
+    background: rgba(128,128,128,0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(128,128,128,0.1);
+    overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.invoices-table-wrapper { width: 100%; overflow-x: auto; }
+.invoices-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 800px; }
+
+/* RTL Table */
+html[dir="rtl"] .invoices-table { text-align: right; }
+
+.invoices-table__head th {
+    padding: 18px 20px; font-weight: 600; font-size: 0.85rem;
+    text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.1);
+}
+
+.invoices-row { transition: background-color 0.2s; border-bottom: 1px solid rgba(128, 128, 128, 0.05); }
+.invoices-page--dark .invoices-row:hover { background-color: rgba(255, 255, 255, 0.03); }
+.invoices-page--light .invoices-row:hover { background-color: rgba(0, 0, 0, 0.02); }
+
+.invoices-row__cell { padding: 16px 20px; vertical-align: middle; white-space: nowrap; }
+
+.invoices-row__no { font-family: monospace; font-weight: 700; opacity: 0.8; }
+.invoices-row__time { display: block; font-size: 0.75rem; opacity: 0.5; margin-top: 2px; }
+.invoices-row__customer { font-weight: 600; }
+.invoices-row__amount { font-weight: 700; color: #d4af37; }
+
+.payment-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.payment-tag {
+    background: rgba(128, 128, 128, 0.1); padding: 2px 8px;
+    border-radius: 4px; font-size: 0.75rem;
+}
+
+.invoices-btn {
+    background: rgba(128, 128, 128, 0.1); border: none;
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: 0.2s; color: inherit; opacity: 0.7;
+}
+.invoices-btn:hover { opacity: 1; background: #d4af37; color: #000; }
+
+.invoices-empty { text-align: center; padding: 40px; opacity: 0.6; }
+
+@media (max-width: 768px) {
+    .invoices-header { flex-direction: column; align-items: flex-start; }
+    .invoices-stats { width: 100%; overflow-x: auto; }
+    .invoices-controls { flex-direction: column; }
+}

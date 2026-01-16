@@ -251,5 +251,13 @@
   "invoice_created": "Invoice Created!",
   "transaction_saved_msg": "Transaction #{{number}} saved successfully.",
   "close": "Close",
-  "print_pdf": "Print PDF"
+  "print_pdf": "Print PDF",
+  "total_revenue": "Total Revenue",
+  "search_invoice_placeholder": "Search Invoice #, Customer...",
+  "total_amount": "Total Amount",
+  "payment_method": "Payment Method",
+  "download_pdf": "Download PDF",
+  "no_invoices_found": "No invoices found.",
+  "view": "View"
+  
 }

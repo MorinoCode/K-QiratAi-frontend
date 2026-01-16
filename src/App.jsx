@@ -18,6 +18,7 @@ import OldGoldPage from './pages/oldGoldPage/OldGoldPage';
 import StaffDetailsPage from './pages/staffDetailsPage/StaffDetailsPage';
 import CustomerDetailsPage from './pages/customerDetailPage/CustomerDetailPage';
 import { useTranslation } from 'react-i18next';
+import InvoicesPage from './pages/invoicesPage/InvoicesPage';
 
 function App() {
   const { i18n } = useTranslation();
@@ -50,6 +51,7 @@ function App() {
                <Route path="/old-gold" element={<OldGoldPage />} />
                <Route path="/manage" element={<ManagePage />} />
                <Route path="/manage/staff/:id" element={<StaffDetailsPage />} />
+               <Route path="/invoices" element={<InvoicesPage />} />
             </Route>
 
             <Route path="/" element={<Navigate to="/dashboard" />} />
