@@ -2,16 +2,14 @@ import axios from 'axios';
 
 const instance = axios.create({
     baseURL: 'http://localhost:5000/api',
-    withCredentials: true, // برای ارسال کوکی‌ها
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
     }
 });
 
-// ✅ Interceptor: افزودن خودکار Tenant ID به تمام درخواست‌ها
 instance.interceptors.request.use(
     (config) => {
-        // خواندن شناسه فروشگاه که در زمان لاگین ذخیره کردیم
         const tenantId = localStorage.getItem('tenant_id');
         
         if (tenantId) {
@@ -21,6 +19,18 @@ instance.interceptors.request.use(
         return config;
     },
     (error) => {
+        return Promise.reject(error);
+    }
+);
+
+instance.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            console.error("Unauthorized access or session expired.");
+        }
         return Promise.reject(error);
     }
 );

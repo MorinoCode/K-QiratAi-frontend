@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
 import './LoginPage.css';
@@ -16,7 +18,6 @@ const LoginPage = () => {
         username: '', 
         password: '' 
     });
-    const [errors, setErrors] = useState({ password: '', server: '' });
     const [isFormValid, setIsFormValid] = useState(false);
 
     useEffect(() => {
@@ -48,24 +49,37 @@ const LoginPage = () => {
                 password: credentials.password
             }, config);
 
-            console.log("Login Success:", response.data);
-
             localStorage.setItem('tenant_id', credentials.storeId);
             
             if (response.data.token) {
-               // localStorage.setItem('token', response.data.token); 
+               // Token handling is usually done in axios interceptors or context
             }
 
-            navigate('/dashboard');
+            toast.success(t('login_successful') || 'Login Successful! Redirecting...', {
+                position: "top-center",
+                autoClose: 2000,
+                theme: theme === 'dark' ? 'dark' : 'light',
+            });
+
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 2000);
+
         } catch (err) {
-            console.error("Login Error:", err);
-            const serverError = err.response?.data?.message || t('invalid_credentials');
-            setErrors(prev => ({ ...prev, server: serverError }));
+            console.error(err);
+            const serverError = err.response?.data?.message || t('invalid_credentials') || "Login failed.";
+            
+            toast.error(serverError, {
+                position: "top-center",
+                autoClose: 4000,
+                theme: theme === 'dark' ? 'dark' : 'light',
+            });
         }
     };
 
     return (
         <div className={`login-page login-page--${theme}`}>
+            <ToastContainer />
             <div className={`login-card login-card--${theme}`}>
                 <div className="login-card__kuwait-strip">
                     <div className="login-card__strip-item login-card__strip-item--green"></div>
@@ -107,7 +121,7 @@ const LoginPage = () => {
                     <div className={`login-card__form-group login-card__form-group--${theme}`}>
                         <label className={`login-card__label login-card__label--${theme}`}>{t('password')}</label>
                         <input 
-                            className={`login-card__input ${errors.password ? 'login-card__input--error' : ''} login-card__input--${theme}`}
+                            className={`login-card__input login-card__input--${theme}`}
                             type="password" 
                             placeholder="••••••••"
                             value={credentials.password}
@@ -115,12 +129,6 @@ const LoginPage = () => {
                             required
                         />
                     </div>
-
-                    {errors.server && (
-                        <div className="login-card__error-msg">
-                            {errors.server}
-                        </div>
-                    )}
 
                     <button 
                         type="submit" 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import api from '../../api/axios.js';
 import { useTheme } from '../../context/ThemeContext';
 import './SignupPage.css';
@@ -53,49 +55,61 @@ const SignupPage = () => {
         e.preventDefault();
         if (!isFormValid) return;
 
-        // نگاشت اطلاعات به فرمت جدید بک‌اند
         const payload = {
-            store_name: formData.storeName.trim().toLowerCase(),
+            store_name: formData.storeName.trim(),
             username: formData.username.trim().toLowerCase(),
-            owner_name: formData.fullName.trim().toLowerCase(), 
+            owner_name: formData.fullName.trim(), 
             phone: formData.phone,
             password: formData.password
         };
 
         try {
-            // تغییر آدرس به پلتفرم رجیستر
             const res = await api.post('/platform/register', payload);
             
-            // نمایش شناسه فروشگاه به کاربر (بسیار مهم)
             const tenantId = res.data.tenant_id;
-            alert(`Store Registered Successfully!\n\nIMPORTANT: Your Store ID is: "${tenantId}"\nPlease save it for login.`);
             
-            // انتقال شناسه فروشگاه به صفحه لاگین برای راحتی کاربر
-            navigate('/login', { state: { tenantId } });
+            toast.success(`Store Registered! Your ID: ${tenantId}`, {
+                position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                theme: theme === 'dark' ? 'dark' : 'light',
+            });
+
+            setTimeout(() => {
+                navigate('/login', { state: { tenantId } });
+            }, 5500);
 
         } catch (err) {
-            console.error("Signup Error:", err);
-            const serverError = err.response?.data?.error || err.response?.data?.message || "Registration failed.";
-            setErrors(prev => ({ ...prev, server: serverError }));
+            console.error(err);
+            const serverError = err.response?.data?.message || "Registration failed.";
+            toast.error(serverError, {
+                position: "top-center",
+                autoClose: 4000,
+                theme: theme === 'dark' ? 'dark' : 'light',
+            });
         }
     };
 
     return (
         <div className={`signup-page signup-page--${theme}`}>
+            <ToastContainer />
             <div className={`signup-card signup-card--${theme}`}>
-                <div className={`signup-card__kuwait-strip signup-card__kuwait-strip--${theme}`}>
+                <div className={`signup-card__kuwait-strip`}>
                     <div className={`signup-card__strip-item signup-card__strip-item--green`}></div>
                     <div className={`signup-card__strip-item signup-card__strip-item--white`}></div>
                     <div className={`signup-card__strip-item signup-card__strip-item--red`}></div>
                 </div>
 
-                <header className={`signup-card__header signup-card__header--${theme}`}>
+                <header className={`signup-card__header`}>
                     <h1 className={`signup-card__title signup-card__title--${theme}`}>JOIN K-QIRAT</h1>
                     <p className={`signup-card__subtitle signup-card__subtitle--${theme}`}>REGISTER YOUR GOLD STORE IN KUWAIT</p>
                 </header>
 
-                <form className={`signup-card__form signup-card__form--${theme}`} onSubmit={handleSubmit}>
-                    <div className={`signup-card__form-group signup-card__form-group--full signup-card__form-group--${theme}`}>
+                <form className={`signup-card__form`} onSubmit={handleSubmit}>
+                    <div className={`signup-card__form-group signup-card__form-group--full`}>
                         <label className={`signup-card__label signup-card__label--${theme}`}>Store Name</label>
                         <input 
                             name="storeName"
@@ -107,7 +121,7 @@ const SignupPage = () => {
                         />
                     </div>
 
-                    <div className={`signup-card__form-group signup-card__form-group--${theme}`}>
+                    <div className={`signup-card__form-group`}>
                         <label className={`signup-card__label signup-card__label--${theme}`}>Owner Name</label>
                         <input 
                             name="fullName"
@@ -119,7 +133,7 @@ const SignupPage = () => {
                         />
                     </div>
 
-                    <div className={`signup-card__form-group signup-card__form-group--${theme}`}>
+                    <div className={`signup-card__form-group`}>
                         <label className={`signup-card__label signup-card__label--${theme}`}>Admin Username</label>
                         <input 
                             name="username"
@@ -131,7 +145,7 @@ const SignupPage = () => {
                         />
                     </div>
 
-                    <div className={`signup-card__form-group signup-card__form-group--${theme}`}>
+                    <div className={`signup-card__form-group`}>
                         <label className={`signup-card__label signup-card__label--${theme}`}>Phone Number</label>
                         <input 
                             name="phone"
@@ -143,7 +157,7 @@ const SignupPage = () => {
                         />
                     </div>
 
-                    <div className={`signup-card__form-group signup-card__form-group--${theme}`}>
+                    <div className={`signup-card__form-group`}>
                         <label className={`signup-card__label signup-card__label--${theme}`}>Password</label>
                         <input 
                             name="password"
@@ -153,10 +167,10 @@ const SignupPage = () => {
                             onChange={handleInputChange}
                             required
                         />
-                        {errors.password && <span className={`signup-card__error-msg signup-card__error-msg--${theme}`}>{errors.password}</span>}
+                        {errors.password && <span className={`signup-card__error-msg`}>{errors.password}</span>}
                     </div>
 
-                    <div className={`signup-card__form-group signup-card__form-group--${theme}`}>
+                    <div className={`signup-card__form-group`}>
                         <label className={`signup-card__label signup-card__label--${theme}`}>Confirm Password</label>
                         <input 
                             name="confirmPassword"
@@ -166,10 +180,8 @@ const SignupPage = () => {
                             onChange={handleInputChange}
                             required
                         />
-                        {errors.confirmPassword && <span className={`signup-card__error-msg signup-card__error-msg--${theme}`}>{errors.confirmPassword}</span>}
+                        {errors.confirmPassword && <span className={`signup-card__error-msg`}>{errors.confirmPassword}</span>}
                     </div>
-
-                    {errors.server && <div className="signup-card__form-group--full" style={{color: 'red', fontSize: '0.8rem', textAlign: 'center'}}>{errors.server}</div>}
 
                     <button 
                         type="submit"
@@ -179,7 +191,7 @@ const SignupPage = () => {
                         CREATE ACCOUNT
                     </button>
 
-                    <footer className={`signup-card__footer signup-card__footer--${theme}`}>
+                    <footer className={`signup-card__footer`}>
                         <span className={`signup-card__footer-text signup-card__footer-text--${theme}`}>Already have an account? </span>
                         <button 
                             type="button"
