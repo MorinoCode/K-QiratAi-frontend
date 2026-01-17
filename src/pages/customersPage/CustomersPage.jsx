@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import './CustomersPage.css';
 import { 
     Users, Search, Plus, Edit, Trash2,  
@@ -13,6 +15,8 @@ const CustomersPage = () => {
     const { theme } = useTheme();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const { user } = useAuth();
+
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -35,13 +39,19 @@ const CustomersPage = () => {
     const activeBranchName = localStorage.getItem('active_branch_name') || t('all_branches');
 
     useEffect(() => {
-        fetchCustomers();
-    }, [searchTerm, activeBranchId]);
+        if(user) {
+            fetchCustomers();
+        }
+    }, [searchTerm, activeBranchId, user]);
 
     const fetchCustomers = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/customers?search=${searchTerm}&branch_id=${activeBranchId}`);
+            const branchQuery = (user?.role === 'store_owner' && activeBranchId) 
+                ? `&branch_id=${activeBranchId}` 
+                : '';
+                
+            const res = await api.get(`/customers?search=${searchTerm}${branchQuery}`);
             setCustomers(res.data.data || []);
             setLoading(false);
         } catch (err) {
@@ -81,11 +91,11 @@ const CustomersPage = () => {
                     address: data.address || prev.address,
                     notes: prev.notes + (prev.notes ? '\n' : '') + '[AI Scanned]'
                 }));
-                alert(t('id_scanned_success'));
+                toast.success(t('id_scanned_success'));
             }
         } catch (err) {
             console.error(err);
-            alert(t('scan_failed'));
+            toast.error(t('scan_failed'));
         } finally {
             setIsScanning(false);
         }
@@ -106,10 +116,12 @@ const CustomersPage = () => {
                 await api.put(`/customers/${selectedCustomer.id}`, payload, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
+                toast.success(t('customer_updated_success'));
             } else {
                 await api.post('/customers/add', payload, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
+                toast.success(t('customer_added_success'));
             }
             
             setIsFormOpen(false);
@@ -121,7 +133,7 @@ const CustomersPage = () => {
             setSelectedCustomer(null);
             fetchCustomers();
         } catch (err) {
-            alert(err.response?.data?.message || t('error_saving_customer'));
+            toast.error(err.response?.data?.message || t('error_saving_customer'));
         }
     };
 
@@ -131,8 +143,9 @@ const CustomersPage = () => {
         try { 
             await api.delete(`/customers/${id}`); 
             fetchCustomers(); 
+            toast.success(t('customer_deleted_success'));
         } catch (err) { 
-            alert(err.response?.data?.message || t('delete_failed')); 
+            toast.error(err.response?.data?.message || t('delete_failed')); 
         }
     };
 

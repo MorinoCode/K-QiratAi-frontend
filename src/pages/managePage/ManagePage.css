@@ -3,6 +3,7 @@
     height: 100%;
     overflow-y: auto;
     font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .manage-page--dark { background: #050505; color: #fff; }
@@ -167,12 +168,11 @@
 }
 
 .manage-card__actions {
-    margin-left: auto; /* LTR default */
+    margin-left: auto;
     display: flex;
     gap: 8px;
 }
 
-/* RTL support for margin auto */
 html[dir="rtl"] .manage-card__actions {
     margin-left: 0;
     margin-right: auto;
@@ -197,6 +197,17 @@ html[dir="rtl"] .manage-card__actions {
 .manage-btn-icon--edit:hover { background: #D4AF37; color: #000; }
 .manage-btn-icon--del:hover { background: rgba(255,0,0,0.1); color: #ff4d4d; }
 
+.manage-icon-protected {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #D4AF37;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* Staff Table */
 .manage-table-wrapper {
     overflow-x: auto;
@@ -206,7 +217,6 @@ html[dir="rtl"] .manage-card__actions {
 
 .manage-table { width: 100%; border-collapse: collapse; text-align: left; }
 
-/* RTL table alignment */
 html[dir="rtl"] .manage-table { text-align: right; }
 
 .manage-table__head th {

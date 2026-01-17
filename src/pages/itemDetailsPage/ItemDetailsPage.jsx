@@ -39,6 +39,7 @@ const ItemDetailsPage = () => {
             const data = res.data.data || res.data;
             setItem(data);
             setFormData(data);
+            console.log(data);
             setLoading(false);
         } catch (err) {
             console.error("Error fetching item:", err);
@@ -61,7 +62,11 @@ const ItemDetailsPage = () => {
         try {
             const data = new FormData();
             Object.keys(formData).forEach(key => {
-                if (key !== 'images') data.append(key, formData[key] || '');
+                // Only append if it's not the images array (we handle new images separately)
+                // and avoid appending null values as strings "null"
+                if (key !== 'images' && key !== 'createdAt' && key !== 'updatedAt') {
+                     data.append(key, formData[key] !== null ? formData[key] : '');
+                }
             });
             
             newImages.forEach(file => {
@@ -105,7 +110,9 @@ const ItemDetailsPage = () => {
     const getImageUrl = (url) => {
         if (!url) return '';
         if (url.startsWith('http')) return url;
-        return `${API_URL}${url}`;
+        // Ensure we don't double slash if API_URL has trailing slash or url has leading
+        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+        return `${API_URL}${cleanUrl}`;
     };
 
     const handleNextImage = () => {
@@ -307,17 +314,17 @@ const ItemDetailsPage = () => {
                     <div className="item-info__desc">
                         <label>{t('description_en')}</label>
                         {isEditing ? (
-                            <textarea name="description" value={formData.description} onChange={handleChange} className="item-info__input item-info__input--textarea"/>
+                            <textarea name="description" value={formData.description || ''} onChange={handleChange} className="item-info__input item-info__input--textarea"/>
                         ) : (
-                            <p className="item-info__text-box">{item.description || '-'}</p>
+                            <p className="item-info__text-box">{(item.description && item.description.trim() !== "") ? item.description : '-'}</p>
                         )}
                     </div>
                       <div className="item-info__desc">
                         <label>{t('description_ar')}</label>
                         {isEditing ? (
-                            <textarea name="description_ar" value={formData.description_ar} onChange={handleChange} className="item-info__input item-info__input--textarea item-info__input--rtl"/>
+                            <textarea name="description_ar" value={formData.description_ar || ''} onChange={handleChange} className="item-info__input item-info__input--textarea item-info__input--rtl"/>
                         ) : (
-                            <p className="item-info__text-box item-info__text-box--rtl">{item.description_ar || '-'}</p>
+                            <p className="item-info__text-box item-info__text-box--rtl">{(item.description_ar && item.description_ar.trim() !== "") ? item.description_ar : '-'}</p>
                         )}
                     </div>
                 </div>

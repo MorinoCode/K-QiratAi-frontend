@@ -1,31 +1,40 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../api/axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null); // شامل role, username, branch_id
+    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const location = useLocation();
 
-    // چک کردن وضعیت لاگین هنگام رفرش صفحه
+    // چک کردن وضعیت لاگین با درخواست به سرور (مطمئن‌ترین روش)
     useEffect(() => {
         const checkLoggedIn = async () => {
             try {
-                // فرض: یک روت در بک‌اَند داریم که اطلاعات کاربر فعلی را می‌دهد
-                // اگر هنوز نساختیم، فعلاً از LocalStorage می‌خوانیم
-                const storedUser = localStorage.getItem('user_data');
-                if (storedUser) {
-                    setUser(JSON.parse(storedUser));
-                }
+                // دریافت اطلاعات تازه کاربر (شامل branch_id و role)
+                const res = await api.get('/auth/me');
+                
+                // هندل کردن ساختار پاسخ (res.data.data یا res.data)
+                const userData = res.data.data || res.data;
+                setUser(userData);
             } catch (err) {
-                console.error("Auth check failed", err);
-                localStorage.removeItem('user_data');
+                // اگر ارور داد (مثلاً 401)، یعنی توکن معتبر نیست
+                // console.error("Auth check failed:", err);
+                setUser(null);
+                localStorage.removeItem('user_data'); // پاک کردن دیتای قدیمی
+                
+                // اگر در صفحه لاگین نیست، هدایت کن
+                if (location.pathname !== '/login') {
+                    // navigate('/login'); // اختیاری: اگر می‌خواهید ریدایرکت اجباری باشد
+                }
             } finally {
                 setLoading(false);
             }
         };
+
         checkLoggedIn();
     }, []);
 
@@ -35,15 +44,21 @@ export const AuthProvider = ({ children }) => {
         navigate('/dashboard');
     };
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('user_data');
-        // پاک کردن کوکی توسط بک‌اَند باید انجام شود
-        navigate('/login');
+    const logout = async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (e) {
+            console.error('Logout error', e);
+        } finally {
+            setUser(null);
+            localStorage.removeItem('user_data');
+            navigate('/login');
+        }
     };
 
     return (
         <AuthContext.Provider value={{ user, login, logout, loading }}>
+            {/* تا وقتی لودینگ تمام نشده، هیچ چیزی رندر نکن تا باگ null پیش نیاید */}
             {!loading && children}
         </AuthContext.Provider>
     );
