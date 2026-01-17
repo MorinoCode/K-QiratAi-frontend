@@ -2,33 +2,64 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext'; // Need auth context to check role
 import './InvoicesPage.css';
 import { 
-    FileText, Search, Download, Calendar, Filter, Eye, X 
+    FileText, Search, Download, Calendar, X, Filter 
 } from 'lucide-react';
 
 const InvoicesPage = () => {
     const { theme } = useTheme();
     const { t } = useTranslation();
+    const { user } = useAuth(); // Get current user info
     const API_URL = 'http://localhost:5000';
 
     const [invoices, setInvoices] = useState([]);
+    const [branches, setBranches] = useState([]); // List of branches for filter
     const [loading, setLoading] = useState(true);
+    
     const [searchTerm, setSearchTerm] = useState('');
-    const [dateFilter, setDateFilter] = useState(''); // YYYY-MM-DD
+    const [dateFilter, setDateFilter] = useState('');
+    const [selectedBranchId, setSelectedBranchId] = useState(''); // Filter state
 
+    // Get active branch from local storage (default behavior)
     const activeBranchId = localStorage.getItem('active_branch_id');
-    const activeBranchName = localStorage.getItem('active_branch_name') || t('all_branches');
+    const isOwner = user?.role === 'store_owner';
+
+    useEffect(() => {
+        if (isOwner) {
+            fetchBranches();
+        }
+        // Initialize filter with active branch or empty for owner
+        if (!isOwner) {
+            setSelectedBranchId(activeBranchId);
+        }
+    }, [isOwner, activeBranchId]);
 
     useEffect(() => {
         fetchInvoices();
-    }, [activeBranchId]);
+    }, [selectedBranchId, searchTerm, dateFilter]); // Re-fetch when filters change
+
+    const fetchBranches = async () => {
+        try {
+            // Assuming you have a route to get branches. If not, creates one.
+            const res = await api.get('/platform/branches'); // Adjust route if needed
+            setBranches(res.data.data || []);
+        } catch (err) {
+            console.error("Failed to fetch branches", err);
+        }
+    };
 
     const fetchInvoices = async () => {
         try {
             setLoading(true);
-            // فرض بر این است که اندپوینت مناسب در بک‌اند وجود دارد
-            const res = await api.get(`/sales/invoices?branch_id=${activeBranchId}`);
+            let query = `/sales/invoices?`; // Fixed endpoint path
+            
+            if (selectedBranchId) query += `branch_id=${selectedBranchId}&`;
+            if (searchTerm) query += `search=${searchTerm}&`;
+            if (dateFilter) query += `date=${dateFilter}&`;
+
+            const res = await api.get(query);
             setInvoices(res.data.data || []);
             setLoading(false);
         } catch (err) {
@@ -38,29 +69,15 @@ const InvoicesPage = () => {
     };
 
     const handleDownload = (invoice) => {
-        const safeBranch = 'Main-Branch'; 
-        const fileName = `INV-${safeBranch}-${invoice.invoice_number}.pdf`;
-        const url = `${API_URL}/uploads/invoices/${fileName}`;
-        window.open(url, '_blank');
+        if (invoice.pdf_path) {
+            const cleanPath = invoice.pdf_path.startsWith('/') ? invoice.pdf_path : `/${invoice.pdf_path}`;
+            window.open(`${API_URL}${cleanPath}`, '_blank');
+        } else {
+            alert(t('pdf_not_found_regenerate'));
+        }
     };
 
-    const filteredInvoices = invoices.filter(inv => {
-        const term = searchTerm.toLowerCase();
-        const matchesSearch = 
-            inv.invoice_number.toLowerCase().includes(term) ||
-            (inv.customer && inv.customer.full_name.toLowerCase().includes(term)) ||
-            (inv.customer && inv.customer.phone.includes(term));
-
-        let matchesDate = true;
-        if (dateFilter) {
-            const invDate = new Date(inv.createdAt).toISOString().split('T')[0];
-            matchesDate = invDate === dateFilter;
-        }
-
-        return matchesSearch && matchesDate;
-    });
-
-    const totalRevenue = filteredInvoices.reduce((acc, curr) => acc + parseFloat(curr.total_amount), 0);
+    const totalRevenue = invoices.reduce((acc, curr) => acc + parseFloat(curr.total_amount), 0);
 
     return (
         <div className={`invoices-page invoices-page--${theme}`}>
@@ -69,13 +86,28 @@ const InvoicesPage = () => {
                     <h1 className="invoices-title">
                         <FileText size={24} className="invoices-icon"/> {t('invoices')}
                     </h1>
-                    <p className="invoices-subtitle">{activeBranchName}</p>
+                    {isOwner ? (
+                        <div className="invoices-branch-select">
+                            <select 
+                                value={selectedBranchId} 
+                                onChange={(e) => setSelectedBranchId(e.target.value)}
+                                className="invoices-filter__select"
+                            >
+                                <option value="">{t('all_branches')}</option>
+                                {branches.map(b => (
+                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    ) : (
+                        <p className="invoices-subtitle">{t('branch_invoices')}</p>
+                    )}
                 </div>
                 
                 <div className="invoices-stats">
                     <div className="invoices-stat-box">
                         <span>{t('total_invoices')}:</span>
-                        <strong>{filteredInvoices.length}</strong>
+                        <strong>{invoices.length}</strong>
                     </div>
                     <div className="invoices-stat-box invoices-stat-box--gold">
                         <span>{t('total_revenue')}:</span>
@@ -119,14 +151,12 @@ const InvoicesPage = () => {
                                 <th>{t('invoice_no')}</th>
                                 <th>{t('date')}</th>
                                 <th>{t('customer')}</th>
-                                <th>{t('items')}</th>
                                 <th>{t('total_amount')}</th>
-                                <th>{t('payment_method')}</th>
                                 <th>{t('actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="invoices-table__body">
-                            {filteredInvoices.map(inv => (
+                            {invoices.map(inv => (
                                 <tr key={inv.id} className="invoices-row">
                                     <td className="invoices-row__cell invoices-row__no">{inv.invoice_number}</td>
                                     <td className="invoices-row__cell">
@@ -136,18 +166,8 @@ const InvoicesPage = () => {
                                     <td className="invoices-row__cell invoices-row__customer">
                                         {inv.customer ? inv.customer.full_name : t('unknown')}
                                     </td>
-                                    <td className="invoices-row__cell">{inv.items ? inv.items.length : 0}</td>
                                     <td className="invoices-row__cell invoices-row__amount">
                                         {parseFloat(inv.total_amount).toFixed(3)} {t('kwd')}
-                                    </td>
-                                    <td className="invoices-row__cell">
-                                        {inv.payments && inv.payments.length > 0 ? (
-                                            <div className="payment-tags">
-                                                {inv.payments.map((p, i) => (
-                                                    <span key={i} className="payment-tag">{p.method}</span>
-                                                ))}
-                                            </div>
-                                        ) : '-'}
                                     </td>
                                     <td className="invoices-row__cell">
                                         <div className="invoices-actions">
@@ -156,15 +176,15 @@ const InvoicesPage = () => {
                                                 onClick={() => handleDownload(inv)}
                                                 title={t('download_pdf')}
                                             >
-                                                <Download size={16}/>
+                                                <Download size={16}/> PDF
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
                             ))}
-                            {filteredInvoices.length === 0 && !loading && (
+                            {invoices.length === 0 && !loading && (
                                 <tr>
-                                    <td colSpan="7" className="invoices-empty">{t('no_invoices_found')}</td>
+                                    <td colSpan="5" className="invoices-empty">{t('no_invoices_found')}</td>
                                 </tr>
                             )}
                         </tbody>

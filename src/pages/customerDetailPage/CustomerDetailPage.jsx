@@ -36,12 +36,12 @@ const CustomerDetailsPage = () => {
     const getImageUrl = (url) => {
         if (!url) return null;
         if (url.startsWith('http')) return url;
-        return `${API_BASE_URL}${url}`;
+        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+        return `${API_BASE_URL}${cleanUrl}`;
     };
 
     const handleDownloadInvoice = (invoice) => {
-        // Safe branch name logic or fetch from invoice if available
-        const safeBranch = 'Main-Branch'; 
+        const safeBranch = 'Branch'; 
         const fileName = `INV-${safeBranch}-${invoice.invoice_number}.pdf`;
         const url = `${API_BASE_URL}/uploads/invoices/${fileName}`;
         window.open(url, '_blank');

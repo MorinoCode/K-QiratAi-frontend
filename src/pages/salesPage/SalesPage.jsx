@@ -31,6 +31,7 @@ const SalesPage = () => {
 
     const frontInputRef = useRef(null);
     const backInputRef = useRef(null);
+    const itemInputRef = useRef(null); // Ref for scanner focus
 
     const [liveRates, setLiveRates] = useState(null);
 
@@ -42,6 +43,11 @@ const SalesPage = () => {
             } catch (e) { console.error(e); }
         };
         fetchRates();
+    }, []);
+
+    // Focus on item search when page loads
+    useEffect(() => {
+        if(itemInputRef.current) itemInputRef.current.focus();
     }, []);
 
     useEffect(() => {
@@ -75,7 +81,10 @@ const SalesPage = () => {
     }, [itemSearch]);
 
     const addToCart = (item) => {
-        if (cart.find(c => c.id === item.id)) return;
+        if (cart.find(c => c.id === item.id)) {
+            alert(t('item_already_in_cart'));
+            return;
+        }
         
         let pricePerGram = 0;
         if (liveRates?.Gold && item.metal_type === 'Gold') {
@@ -92,12 +101,17 @@ const SalesPage = () => {
         setCart([...cart, newItem]);
         setItemSearch('');
         setShowItemDropdown(false);
+        
+        // Return focus to scanner input
+        if(itemInputRef.current) itemInputRef.current.focus();
     };
 
     const updateCartItem = (id, field, value) => {
         setCart(cart.map(item => {
             if (item.id === id) {
-                const updated = { ...item, [field]: parseFloat(value) || 0 };
+                const val = parseFloat(value) || 0;
+                const updated = { ...item, [field]: val };
+                // Recalculate total: (Weight * Rate) + Making Charge
                 updated.total_price = (updated.weight * updated.price_per_gram) + updated.labor_cost;
                 return updated;
             }
@@ -221,6 +235,7 @@ const SalesPage = () => {
                         <div className="sales-search__wrapper">
                             <Search className="sales-search__icon" size={20}/>
                             <input 
+                                ref={itemInputRef}
                                 className="sales-search__input"
                                 placeholder={t('scan_barcode_placeholder')} 
                                 value={itemSearch}
@@ -262,7 +277,14 @@ const SalesPage = () => {
                                                 <div className="sales-cart__item-sub">{item.barcode}</div>
                                             </td>
                                             <td>{item.weight} {t('g')}</td>
-                                            <td>{item.price_per_gram.toFixed(3)}</td>
+                                            <td>
+                                                <input 
+                                                    type="number" 
+                                                    className="sales-cart__input"
+                                                    value={item.price_per_gram}
+                                                    onChange={e => updateCartItem(item.id, 'price_per_gram', e.target.value)}
+                                                />
+                                            </td>
                                             <td>
                                                 <input 
                                                     type="number" 
