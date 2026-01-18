@@ -252,6 +252,35 @@ html[dir="rtl"] .item-gallery__delete-btn { right: auto; left: 16px; }
 }
 .item-info__text-box--rtl { text-align: right; direction: rtl; }
 
+/* Modal Styles */
+.details-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; z-index: 2000;
+}
+.details-modal {
+    background: #111; width: 90%; max-width: 400px;
+    border-radius: 20px; padding: 25px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(128, 128, 128, 0.1);
+}
+.item-details--light .details-modal { background: #fff; }
+
+.details-modal__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.details-modal__close { background: none; border: none; cursor: pointer; color: inherit; opacity: 0.6; }
+
+.details-modal__body { display: flex; flex-direction: column; align-items: center; }
+
+.print-preview-area {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px dashed rgba(128,128,128,0.3);
+    border-radius: 8px;
+    background: #fff; /* Ensure preview has white bg */
+}
+
+.print-instruction { font-size: 0.9rem; opacity: 0.7; margin-bottom: 15px; text-align: center; }
+
 @media (max-width: 900px) {
     .item-details__content { flex-direction: column; }
     .item-gallery { max-width: 100%; }
