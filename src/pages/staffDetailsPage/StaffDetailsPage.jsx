@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
 import './StaffDetailsPage.css';
-import { User, ArrowLeft, Briefcase, TrendingUp, Calendar } from 'lucide-react';
+import { User, ArrowLeft, Briefcase, TrendingUp, Calendar, BadgeCheck } from 'lucide-react';
 
 const StaffDetailsPage = () => {
     const { id } = useParams();
@@ -29,7 +29,12 @@ const StaffDetailsPage = () => {
         fetchDetails();
     }, [id, navigate, t]);
 
-    if (loading) return <div className={`staff-page staff-page--${theme} staff-page--loading`}>{t('loading_analysis')}</div>;
+    if (loading) return (
+        <div className={`staff-page staff-page--${theme} staff-page--loading`}>
+            <div className="staff-page__loader"></div>
+            <span>{t('loading_analysis')}</span>
+        </div>
+    );
 
     const { staff, history, stats } = data;
 
@@ -39,74 +44,104 @@ const StaffDetailsPage = () => {
                 <button className="staff-page__back-btn" onClick={() => navigate('/manage')}>
                     <ArrowLeft size={20}/> {t('back_to_list')}
                 </button>
-                <h1 className="staff-page__title">{staff.full_name}</h1>
-                <span className={`staff-page__badge staff-page__badge--${staff.role}`}>{staff.role}</span>
+                <div className="staff-page__title-group">
+                    <h1 className="staff-page__title">{staff.full_name}</h1>
+                    <span className={`staff-page__badge staff-page__badge--${staff.role}`}>
+                        {t(staff.role)}
+                    </span>
+                </div>
             </header>
 
             <div className="staff-grid">
-                <div className="staff-sidebar">
-                    <div className="staff-info-card">
-                        <div className="staff-avatar-placeholder"><User size={40}/></div>
-                        <h3 className="staff-info-card__username">{staff.username}</h3>
-                        <p className="staff-info-card__detail">
-                            <Briefcase size={14}/> {staff.branch ? staff.branch.name : t('no_branch')}
-                        </p>
-                        <p className="staff-info-card__detail">
-                            <Calendar size={14}/> {t('joined')}: {new Date(staff.createdAt).toLocaleDateString()}
-                        </p>
-                    </div>
-
-                    <div className="staff-ai-card">
-                        <div className="staff-ai-header">
-                            <TrendingUp size={18}/> 
-                            <span>{t('ai_performance_analytics')}</span>
+                <aside className="staff-sidebar">
+                    <div className="staff-card staff-info">
+                        <div className="staff-info__avatar-wrapper">
+                            <div className="staff-info__avatar">
+                                <User size={40}/>
+                            </div>
                         </div>
-                        <div className="staff-stat-row">
-                            <span>{t('total_sales_volume')}:</span>
-                            <strong>{stats.total_sales_volume} {t('kwd')}</strong>
-                        </div>
-                        <div className="staff-stat-row">
-                            <span>{t('total_invoices')}:</span>
-                            <strong>{stats.total_invoices}</strong>
-                        </div>
-                        <div className="staff-ai-insight">
-                            <p>🤖 <strong>{t('ai_insight')}:</strong> {t('ai_insight_text')}</p>
+                        <h3 className="staff-info__username">{staff.username}</h3>
+                        
+                        <div className="staff-info__details">
+                            <div className="staff-info__detail-item">
+                                <Briefcase size={16} className="staff-info__icon"/>
+                                <span className="staff-info__value">
+                                    {staff.branch ? staff.branch.name : t('no_branch')}
+                                </span>
+                            </div>
+                            <div className="staff-info__detail-item">
+                                <Calendar size={16} className="staff-info__icon"/>
+                                <span className="staff-info__value">
+                                    {t('joined')}: {new Date(staff.createdAt).toLocaleDateString()}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="staff-content">
-                    <h2 className="staff-content__title">{t('recent_sales_history')}</h2>
-                    <div className="staff-table-wrapper">
-                        <table className="staff-data-table">
-                            <thead className="staff-data-table__head">
-                                <tr>
-                                    <th>{t('date')}</th>
-                                    <th>{t('invoice_no')}</th>
-                                    <th>{t('customer')}</th>
-                                    <th>{t('amount')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="staff-data-table__body">
-                                {history.map(inv => (
-                                    <tr key={inv.id} className="staff-data-table__row">
-                                        <td>{new Date(inv.createdAt).toLocaleDateString()}</td>
-                                        <td>{inv.invoice_number}</td>
-                                        <td>{inv.customer ? inv.customer.full_name : t('unknown')}</td>
-                                        <td className="staff-text-gold">{inv.total_amount} {t('kwd')}</td>
-                                    </tr>
-                                ))}
-                                {history.length === 0 && (
+                    <div className="staff-card staff-ai">
+                        <div className="staff-card__header">
+                            <TrendingUp size={20}/> 
+                            <h3>{t('ai_performance_analytics')}</h3>
+                        </div>
+                        
+                        <div className="staff-ai__stats">
+                            <div className="staff-ai__stat-row">
+                                <span className="staff-ai__label">{t('total_sales_volume')}:</span>
+                                <span className="staff-ai__value staff-ai__value--gold">
+                                    {stats.total_sales_volume} <small>{t('kwd')}</small>
+                                </span>
+                            </div>
+                            <div className="staff-ai__stat-row">
+                                <span className="staff-ai__label">{t('total_invoices')}:</span>
+                                <span className="staff-ai__value">{stats.total_invoices}</span>
+                            </div>
+                        </div>
+
+                        <div className="staff-ai__insight">
+                            <div className="staff-ai__insight-header">
+                                <BadgeCheck size={16} /> {t('ai_insight')}
+                            </div>
+                            <p className="staff-ai__insight-text">
+                                {t('ai_insight_text')}
+                            </p>
+                        </div>
+                    </div>
+                </aside>
+
+                <main className="staff-content">
+                    <div className="staff-card staff-history">
+                        <h2 className="staff-card__title">{t('recent_sales_history')}</h2>
+                        <div className="staff-table-wrapper">
+                            <table className="staff-table">
+                                <thead className="staff-table__head">
                                     <tr>
-                                        <td colSpan="4" className="staff-data-table__empty">
-                                            {t('no_sales_records')}
-                                        </td>
+                                        <th>{t('date')}</th>
+                                        <th>{t('invoice_no')}</th>
+                                        <th>{t('customer')}</th>
+                                        <th>{t('amount')}</th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="staff-table__body">
+                                    {history.map(inv => (
+                                        <tr key={inv.id} className="staff-table__row">
+                                            <td>{new Date(inv.createdAt).toLocaleDateString()}</td>
+                                            <td className="staff-table__invoice">{inv.invoice_number}</td>
+                                            <td>{inv.customer ? inv.customer.full_name : t('unknown')}</td>
+                                            <td className="staff-table__amount">{inv.total_amount} {t('kwd')}</td>
+                                        </tr>
+                                    ))}
+                                    {history.length === 0 && (
+                                        <tr>
+                                            <td colSpan="4" className="staff-table__empty">
+                                                {t('no_sales_records')}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                </main>
             </div>
         </div>
     );
