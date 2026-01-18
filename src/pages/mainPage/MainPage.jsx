@@ -19,33 +19,33 @@ const MainPage = () => {
 
     useEffect(() => {
         const hour = new Date().getHours();
-        if (hour < 12) setGreeting('Good morning');
-        else if (hour < 18) setGreeting('Goodafternoon');
-        else setGreeting('Good evening');
+        if (hour < 12) setGreeting('good_morning');
+        else if (hour < 18) setGreeting('good_afternoon');
+        else setGreeting('good_evening');
     }, []);
 
     const menuItems = [
         {
             category: 'sales_operations',
             items: [
-                { title: 'new_sale', icon: ShoppingCart, link: '/sales', color: 'primary', desc: 'start invoice' },
-                { title: 'customers', icon: Users, link: '/customers', color: 'secondary', desc: 'manage crm' },
-                { title: 'gold_calculator', icon: Calculator, link: '/calculator', color: 'secondary', desc: 'quick calc' }
+                { title: 'new_sale', icon: ShoppingCart, link: '/sales', color: 'primary', desc: 'start_invoice' },
+                { title: 'customers', icon: Users, link: '/customers', color: 'secondary', desc: 'manage_crm' },
+                { title: 'gold_calculator', icon: Calculator, link: '/calculator', color: 'secondary', desc: 'quick_calc' }
             ]
         },
         {
             category: 'inventory_stock',
             items: [
-                { title: 'inventory', icon: Package, link: '/inventory', color: 'default', desc: 'view stock' },
-                { title: 'add_item', icon: PlusCircle, link: '/inventory/add', color: 'default', desc: 'new stock' },
-                { title: 'old_gold', icon: RefreshCw, link: '/old-gold', color: 'default', desc: 'exchange buy' }
+                { title: 'inventory', icon: Package, link: '/inventory', color: 'default', desc: 'view_stock' },
+                { title: 'add_item', icon: PlusCircle, link: '/inventory/add', color: 'default', desc: 'new_stock' },
+                { title: 'old_gold', icon: RefreshCw, link: '/old-gold', color: 'default', desc: 'exchange_buy' }
             ]
         },
         {
             category: 'management',
             items: [
-                { title: 'dashboard', icon: BarChart2, link: '/dashboard', color: 'accent', desc: 'analytics kpi' },
-                { title: 'settings', icon: Settings, link: '/settings', color: 'default', desc: 'app config' }
+                { title: 'dashboard', icon: BarChart2, link: '/dashboard', color: 'accent', desc: 'analytics_kpi' },
+                { title: 'settings', icon: Settings, link: '/settings', color: 'default', desc: 'app_config' }
             ]
         }
     ];
@@ -54,18 +54,17 @@ const MainPage = () => {
         <div className={`main-dashboard main-dashboard--${theme}`}>
             <header className="main-dashboard__header">
                 <div className="main-dashboard__header-content">
-                    <h1 className="main-dashboard__greeting-title">
-                        {t(greeting)}, 
-                        <span className="main-dashboard__username"> {user?.full_name || 'User'}</span>
+                    <h1 className="main-dashboard__greeting">
+                        {t(greeting)}, <span className="main-dashboard__username">{user?.full_name || 'User'}</span>
                     </h1>
-                    
+                    <p className="main-dashboard__subtitle">{t('main_subtitle')}</p>
                 </div>
                 <button className="main-dashboard__logout-btn" onClick={logout} title={t('logout')}>
                     <LogOut className="main-dashboard__logout-icon" size={20} />
                 </button>
             </header>
 
-            <div className="main-dashboard__container">
+            <div className="main-dashboard__content">
                 {menuItems.map((section, idx) => (
                     <section key={idx} className="main-dashboard__section">
                         <h3 className="main-dashboard__section-title">{t(section.category)}</h3>
@@ -73,18 +72,18 @@ const MainPage = () => {
                             {section.items.map((item, i) => (
                                 <article 
                                     key={i} 
-                                    className={`main-dashboard__card main-dashboard__card--${item.color}`}
+                                    className={`dashboard-card dashboard-card--${item.color}`}
                                     onClick={() => navigate(item.link)}
                                 >
-                                    <div className="main-dashboard__card-icon-wrapper">
-                                        <item.icon className="main-dashboard__card-icon" size={28} strokeWidth={1.5} />
+                                    <div className="dashboard-card__icon-box">
+                                        <item.icon size={24} strokeWidth={1.5} />
                                     </div>
-                                    <div className="main-dashboard__card-content">
-                                        <h4 className="main-dashboard__card-title">{t(item.title)}</h4>
-                                        <p className="main-dashboard__card-desc">{t(item.desc)}</p>
+                                    <div className="dashboard-card__info">
+                                        <h4 className="dashboard-card__title">{t(item.title)}</h4>
+                                        <p className="dashboard-card__desc">{t(item.desc)}</p>
                                     </div>
-                                    <div className="main-dashboard__card-arrow-box">
-                                        <ArrowRight className="main-dashboard__card-arrow-icon" size={16} />
+                                    <div className="dashboard-card__action">
+                                        <ArrowRight size={18} />
                                     </div>
                                 </article>
                             ))}
