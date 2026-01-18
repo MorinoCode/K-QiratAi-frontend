@@ -104,6 +104,7 @@
     position: relative;
     display: flex;
     align-items: center;
+    gap: 8px; /* Added gap for the button */
 }
 
 .sales-search__icon {
@@ -126,6 +127,23 @@
 .sales-search__input:focus {
     border-color: #d4af37;
     background: rgba(128, 128, 128, 0.08);
+}
+
+.sales-btn-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #d4af37;
+    border: none;
+    border-radius: 12px;
+    color: black;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.sales-btn-add:hover {
+    background: #c5a028;
 }
 
 /* RTL Search Icon */
@@ -302,8 +320,12 @@ html[dir="rtl"] .sales-payment__input { padding: 10px 10px 10px 35px; }
     border-radius: 20px; padding: 25px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(128, 128, 128, 0.1);
+    max-height: 90vh;
+    overflow-y: auto;
 }
 .sales-page--light .sales-modal { background: #fff; }
+
+.sales-modal--large { max-width: 600px; }
 
 .sales-modal__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .sales-modal__close { background: none; border: none; cursor: pointer; color: inherit; opacity: 0.6; }
@@ -316,8 +338,27 @@ html[dir="rtl"] .sales-payment__input { padding: 10px 10px 10px 35px; }
 .sales-spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Customer Form inside Sales Modal (Borrowed Styles) */
+.customer-scan-section { margin-bottom: 20px; }
+.customer-scan__label { font-size: 0.8rem; font-weight: 600; opacity: 0.7; margin-bottom: 8px; display: block; }
+.customer-scan__buttons { display: flex; gap: 10px; }
+.customer-scan-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    padding: 15px; border: 1px dashed rgba(128,128,128,0.3); border-radius: 12px;
+    background: rgba(128,128,128,0.05); color: inherit; cursor: pointer; font-size: 0.8rem; font-weight: 500;
+}
+.customer-scan-btn--done { border-style: solid; border-color: #00c853; color: #00c853; background: rgba(0,200,83,0.05); }
+
+.customer-form { display: flex; flex-direction: column; gap: 12px; }
+.customer-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.customer-form__input {
+    width: 100%; padding: 12px; border: 1px solid rgba(128,128,128,0.2); border-radius: 10px;
+    background: rgba(128,128,128,0.05); color: inherit; outline: none; font-size: 0.95rem;
+}
+.customer-form__input:focus { border-color: #d4af37; background: rgba(128,128,128,0.1); }
+.customer-form__input--textarea { resize: vertical; min-height: 80px; }
+
 @media (max-width: 900px) {
     .sales-grid { grid-template-columns: 1fr; }
-    .customer-details-grid { grid-template-columns: 1fr; }
-    .detail-group.full-width { grid-column: auto; }
+    .customer-form__row { grid-template-columns: 1fr; }
 }

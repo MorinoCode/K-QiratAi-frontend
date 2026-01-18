@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
 import './SalesPage.css';
 import { 
     ShoppingCart, User, Search, Plus, Trash2, 
-    CreditCard, Printer, CheckCircle, X, Upload, Loader, FileText 
+    CreditCard, Printer, CheckCircle, X, Upload, Loader, FileText, Camera
 } from 'lucide-react';
 
 const SalesPage = () => {
@@ -31,9 +32,22 @@ const SalesPage = () => {
 
     const frontInputRef = useRef(null);
     const backInputRef = useRef(null);
-    const itemInputRef = useRef(null); // Ref for scanner focus
+    const itemInputRef = useRef(null);
 
     const [liveRates, setLiveRates] = useState(null);
+
+    // New Customer Modal States
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
+    const [idFiles, setIdFiles] = useState({ front: null, back: null });
+    const newCustFrontRef = useRef(null);
+    const newCustBackRef = useRef(null);
+    const activeBranchId = localStorage.getItem('active_branch_id');
+
+    const [formData, setFormData] = useState({
+        full_name: '', phone: '', civil_id: '', type: 'Regular', notes: '',
+        nationality: 'Kuwaiti', gender: 'M', address: '', birth_date: '', expiry_date: ''
+    });
 
     useEffect(() => {
         const fetchRates = async () => {
@@ -45,7 +59,6 @@ const SalesPage = () => {
         fetchRates();
     }, []);
 
-    // Focus on item search when page loads
     useEffect(() => {
         if(itemInputRef.current) itemInputRef.current.focus();
     }, []);
@@ -82,7 +95,7 @@ const SalesPage = () => {
 
     const addToCart = (item) => {
         if (cart.find(c => c.id === item.id)) {
-            alert(t('item_already_in_cart'));
+            toast.warning(t('item_already_in_cart'));
             return;
         }
         
@@ -102,7 +115,6 @@ const SalesPage = () => {
         setItemSearch('');
         setShowItemDropdown(false);
         
-        // Return focus to scanner input
         if(itemInputRef.current) itemInputRef.current.focus();
     };
 
@@ -111,7 +123,6 @@ const SalesPage = () => {
             if (item.id === id) {
                 const val = parseFloat(value) || 0;
                 const updated = { ...item, [field]: val };
-                // Recalculate total: (Weight * Rate) + Making Charge
                 updated.total_price = (updated.weight * updated.price_per_gram) + updated.labor_cost;
                 return updated;
             }
@@ -142,7 +153,7 @@ const SalesPage = () => {
     };
 
     const handleIdUpload = async (e, side) => {
-        if (!selectedCustomer) return alert(t('select_customer_first'));
+        if (!selectedCustomer) return toast.warning(t('select_customer_first'));
         const file = e.target.files[0];
         if (!file) return;
 
@@ -155,17 +166,17 @@ const SalesPage = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setSelectedCustomer(res.data.data); 
-            alert(t('upload_success'));
+            toast.success(t('upload_success'));
         } catch (err) {
-            alert(t('upload_failed'));
+            toast.error(t('upload_failed'));
         }
     };
 
     const handleSubmitSale = async () => {
-        if (!selectedCustomer) return alert(t('select_customer_first'));
-        if (cart.length === 0) return alert(t('cart_empty'));
+        if (!selectedCustomer) return toast.warning(t('select_customer_first'));
+        if (cart.length === 0) return toast.warning(t('cart_empty'));
         if (Math.abs(remaining) > 0.01) {
-            return alert(t('payment_mismatch'));
+            return toast.error(t('payment_mismatch'));
         }
 
         setIsLoading(true);
@@ -202,7 +213,7 @@ const SalesPage = () => {
             setPayments([{ method: 'Cash', amount: '', reference: '' }]);
             setSelectedCustomer(null);
         } catch (err) {
-            alert(err.response?.data?.message || t('transaction_failed'));
+            toast.error(err.response?.data?.message || t('transaction_failed'));
         } finally {
             setIsLoading(false);
         }
@@ -212,7 +223,83 @@ const SalesPage = () => {
         if(localPdfUrl) {
             window.open(localPdfUrl, '_blank');
         } else {
-            alert(t('pdf_not_ready'));
+            toast.warning(t('pdf_not_ready'));
+        }
+    };
+
+    // --- New Customer Logic ---
+    const handleNewFileSelect = async (e, side) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIdFiles(prev => ({ ...prev, [side]: file }));
+        await processOCR(file);
+    };
+
+    const processOCR = async (file) => {
+        setIsScanning(true);
+        const ocrFormData = new FormData();
+        ocrFormData.append('image', file);
+
+        try {
+            const res = await api.post('/customers/scan', ocrFormData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (res.data.success) {
+                const data = res.data.data;
+                setFormData(prev => ({
+                    ...prev,
+                    civil_id: data.civil_id || prev.civil_id,
+                    full_name: data.full_name || prev.full_name,
+                    nationality: data.nationality || prev.nationality,
+                    gender: data.gender ? (data.gender === 'F' ? 'F' : 'M') : prev.gender,
+                    birth_date: data.birth_date || prev.birth_date,
+                    expiry_date: data.expiry_date || prev.expiry_date,
+                    address: data.address || prev.address,
+                    notes: prev.notes + (prev.notes ? '\n' : '') + '[AI Scanned]'
+                }));
+                toast.success(t('id_scanned_success'));
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error(t('scan_failed'));
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
+    const handleSaveNewCustomer = async (e) => {
+        e.preventDefault();
+        try {
+            const payload = new FormData();
+            Object.keys(formData).forEach(key => payload.append(key, formData[key]));
+            
+            if (activeBranchId) payload.append('branch_id', activeBranchId);
+            
+            if (idFiles.front) payload.append('front_image', idFiles.front);
+            if (idFiles.back) payload.append('back_image', idFiles.back);
+
+            const res = await api.post('/customers/add', payload, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            toast.success(t('customer_added_success'));
+            
+            // Auto Select and Close
+            setSelectedCustomer(res.data.data);
+            setIsFormOpen(false);
+            setCustomerSearch(''); 
+            
+            // Reset Form
+            setFormData({ 
+                full_name: '', phone: '', civil_id: '', type: 'Regular', notes: '',
+                nationality: 'Kuwaiti', gender: 'M', address: '', birth_date: '', expiry_date: ''
+            });
+            setIdFiles({ front: null, back: null });
+
+        } catch (err) {
+            toast.error(err.response?.data?.message || t('error_saving_customer'));
         }
     };
 
@@ -330,6 +417,10 @@ const SalesPage = () => {
                                     value={customerSearch}
                                     onChange={e => setCustomerSearch(e.target.value)}
                                 />
+                                <button className="sales-btn-add" onClick={() => setIsFormOpen(true)} title={t('add_customer')}>
+                                    <Plus size={20} />
+                                </button>
+                                
                                 {showCustDropdown && customersList.length > 0 && (
                                     <ul className="sales-dropdown">
                                         {customersList.map(cust => (
@@ -469,6 +560,79 @@ const SalesPage = () => {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* NEW CUSTOMER MODAL */}
+            {isFormOpen && (
+                <div className="sales-modal-overlay">
+                    <div className={`sales-modal sales-modal--large sales-modal--${theme}`}>
+                        <div className="sales-modal__header">
+                            <h3>{t('new_customer_scan')}</h3>
+                            <button className="sales-modal__close" onClick={() => setIsFormOpen(false)}><X size={20}/></button>
+                        </div>
+                        
+                        <div className="customer-scan-section">
+                            <p className="customer-scan__label">{t('upload_civil_id')}</p>
+                            <div className="customer-scan__buttons">
+                                <input type="file" ref={newCustFrontRef} style={{display:'none'}} accept="image/*" onChange={(e) => handleNewFileSelect(e, 'front')} />
+                                <button type="button" className={`customer-scan-btn ${idFiles.front ? 'customer-scan-btn--done' : ''}`} onClick={() => newCustFrontRef.current.click()} disabled={isScanning}>
+                                    {isScanning ? <Loader className="sales-spin" size={18}/> : <Camera size={18}/>}
+                                    {idFiles.front ? t('front_uploaded') : t('scan_front')}
+                                </button>
+
+                                <input type="file" ref={newCustBackRef} style={{display:'none'}} accept="image/*" onChange={(e) => handleNewFileSelect(e, 'back')} />
+                                <button type="button" className={`customer-scan-btn ${idFiles.back ? 'customer-scan-btn--done' : ''}`} onClick={() => newCustBackRef.current.click()} disabled={isScanning}>
+                                    {isScanning ? <Loader className="sales-spin" size={18}/> : <Upload size={18}/>}
+                                    {idFiles.back ? t('back_uploaded') : t('scan_back')}
+                                </button>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSaveNewCustomer} className="customer-form">
+                            <input className="customer-form__input" placeholder={t('full_name')} required 
+                                value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} />
+                            
+                            <div className="customer-form__row">
+                                <input className="customer-form__input" placeholder={t('phone')} required 
+                                    value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                <input className="customer-form__input" placeholder={t('civil_id')} 
+                                    value={formData.civil_id} onChange={e => setFormData({...formData, civil_id: e.target.value})} />
+                            </div>
+
+                            <div className="customer-form__row">
+                                <select className="customer-form__input" value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
+                                    <option value="M">{t('male')}</option>
+                                    <option value="F">{t('female')}</option>
+                                </select>
+                                <input className="customer-form__input" placeholder={t('nationality')} 
+                                    value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} />
+                            </div>
+
+                            <div className="customer-form__row">
+                                <input className="customer-form__input" placeholder={t('birth_date')} 
+                                    value={formData.birth_date} onChange={e => setFormData({...formData, birth_date: e.target.value})} />
+                                <input className="customer-form__input" placeholder={t('expiry_date')} 
+                                    value={formData.expiry_date} onChange={e => setFormData({...formData, expiry_date: e.target.value})} />
+                            </div>
+
+                            <input className="customer-form__input" placeholder={t('address')} 
+                                value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+
+                            <select className="customer-form__input" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+                                <option value="Regular">Regular</option>
+                                <option value="VIP">VIP</option>
+                                <option value="Wholesaler">Wholesaler</option>
+                            </select>
+
+                            <textarea className="customer-form__input customer-form__input--textarea" placeholder={t('notes')} rows="2"
+                                value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} />
+
+                            <button type="submit" className="sales-btn sales-btn--primary" disabled={isScanning}>
+                                {isScanning ? t('wait_ai') : t('save_customer')}
+                            </button>
+                        </form>
                     </div>
                 </div>
             )}
