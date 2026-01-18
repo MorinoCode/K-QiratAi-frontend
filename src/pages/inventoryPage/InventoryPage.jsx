@@ -8,7 +8,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import './InventoryPage.css';
 import { 
-    Plus, Search, ScanLine, X, Printer
+    Plus, Search, ScanLine, X, Printer, Wand2
 } from 'lucide-react';
 
 const InventoryPage = () => {
@@ -31,7 +31,6 @@ const InventoryPage = () => {
     
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     
-    // Print Logic
     const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
     const [printItem, setPrintItem] = useState(null);
     const printRef = useRef(null);
@@ -111,6 +110,11 @@ const InventoryPage = () => {
     const handlePrintRequest = (item) => {
         setPrintItem(item);
         setIsPrintModalOpen(true);
+    };
+
+    const handleSmartBarcodeRequest = () => {
+        setNewItem(prev => ({ ...prev, barcode: '' })); 
+        alert(t('barcode_will_be_generated'));
     };
 
     const handleImageSelect = (e) => {
@@ -213,12 +217,12 @@ const InventoryPage = () => {
     return (
         <div className={`inventory-page inventory-page--${theme}`}>
             <header className="inventory-page__header">
-                <div className="inventory-page__headings">
+                <div className="inventory-page__header-titles">
                     <h1 className="inventory-page__title">{t('branch_inventory')}</h1>
                     <p className="inventory-page__subtitle">{activeBranchName}</p>
                 </div>
                 
-                <div className="inventory-page__stats">
+                <div className="inventory-page__stats-container">
                     <div className="inventory-stat"><span>{t('items')}:</span> <strong>{filteredItems.length}</strong></div>
                     <div className="inventory-stat"><span>{t('total_weight')}:</span> <strong>{totalWeight} {t('g')}</strong></div>
                     <div className="inventory-stat inventory-stat--gold"><span>{t('market_value')}:</span> <strong>{totalValue} {t('kwd')}</strong></div>
@@ -231,8 +235,8 @@ const InventoryPage = () => {
                 </div>
             </header>
 
-            <div className="inventory-page__controls">
-                <div className="inventory-page__search-row">
+            <div className="inventory-controls">
+                <div className="inventory-controls__top">
                     <div className="inventory-search">
                         <Search size={18} className="inventory-search__icon" />
                         <input 
@@ -254,7 +258,7 @@ const InventoryPage = () => {
                             value={priceMin}
                             onChange={(e) => setPriceMin(e.target.value)}
                         />
-                        <span className="inventory-price-filter__sep">-</span>
+                        <span className="inventory-price-filter__separator">-</span>
                         <input 
                             className="inventory-price-filter__input"
                             type="number" 
@@ -265,8 +269,8 @@ const InventoryPage = () => {
                     </div>
                 </div>
                 
-                <div className="inventory-page__filter-row">
-                    <div className="inventory-select-wrapper">
+                <div className="inventory-controls__bottom">
+                    <div className="inventory-select-box">
                         <select className="inventory-select" onChange={(e) => setFilterMetal(e.target.value)} value={filterMetal}>
                             <option value="All">{t('all_metals')}</option>
                             <option value="Gold">{t('gold')}</option>
@@ -275,7 +279,7 @@ const InventoryPage = () => {
                             <option value="Diamond">{t('diamond')}</option>
                         </select>
                     </div>
-                    <div className="inventory-select-wrapper">
+                    <div className="inventory-select-box">
                         <select className="inventory-select" onChange={(e) => setFilterKarat(e.target.value)} value={filterKarat}>
                             <option value="All">{t('all_karats')}</option>
                             <option value="24">24K</option>
@@ -284,7 +288,7 @@ const InventoryPage = () => {
                             <option value="18">18K</option>
                         </select>
                     </div>
-                    <div className="inventory-select-wrapper">
+                    <div className="inventory-select-box">
                         <select className="inventory-select" onChange={(e) => setFilterCategory(e.target.value)} value={filterCategory}>
                             <option value="All">{t('all_categories')}</option>
                             <option value="Ring">{t('rings')}</option>
@@ -296,7 +300,7 @@ const InventoryPage = () => {
                             <option value="Pendant">{t('pendants')}</option>
                         </select>
                     </div>
-                    <div className="inventory-select-wrapper">
+                    <div className="inventory-select-box">
                         <select className="inventory-select" onChange={(e) => setFilterCountry(e.target.value)} value={filterCountry}>
                             <option value="All">{t('all_countries')}</option>
                             <option value="Kuwait">{t('kuwait')}</option>
@@ -350,12 +354,11 @@ const InventoryPage = () => {
                 </div>
             </div>
             
-            {/* ADD ITEM MODAL */}
             {isAddModalOpen && (
                 <div className="inventory-modal-overlay">
                     <div className={`inventory-modal inventory-modal--${theme}`}>
                          <div className="inventory-modal__header">
-                            <h2>{t('add_new_item')}</h2>
+                            <h2 className="inventory-modal__title">{t('add_new_item')}</h2>
                             <button className="inventory-modal__close" onClick={() => setIsAddModalOpen(false)}>
                                 <X size={24} />
                             </button>
@@ -378,6 +381,17 @@ const InventoryPage = () => {
                                     <option value="Bangle">{t('bangle')}</option>
                                     <option value="Pendant">{t('pendant')}</option>
                                 </select>
+                            </div>
+
+                            <div className="inventory-form__barcode-row">
+                                <input className="inventory-form__input inventory-form__input--barcode" 
+                                    placeholder={t('barcode_placeholder_auto')} 
+                                    value={newItem.barcode} 
+                                    onChange={e => setNewItem({...newItem, barcode: e.target.value})}
+                                />
+                                <button type="button" className="inventory-btn inventory-btn--secondary" onClick={handleSmartBarcodeRequest} title={t('auto_generate')}>
+                                    <Wand2 size={16} /> {t('auto')}
+                                </button>
                             </div>
 
                             <div className="inventory-form__upload-section">
@@ -460,31 +474,23 @@ const InventoryPage = () => {
                 </div>
             )}
 
-            {/* PRINT MODAL */}
             {isPrintModalOpen && printItem && (
                 <div className="inventory-modal-overlay">
                     <div className={`inventory-modal inventory-modal--${theme} inventory-modal--small`}>
                         <div className="inventory-modal__header">
-                            <h2>{t('print_preview')}</h2>
+                            <h2 className="inventory-modal__title">{t('print_preview')}</h2>
                             <button className="inventory-modal__close" onClick={() => setIsPrintModalOpen(false)}>
                                 <X size={24} />
                             </button>
                         </div>
                         <div className="inventory-modal__body inventory-modal__body--center">
-                            
-                            {/* This is the visual preview for the user */}
                             <div className="print-preview-area">
                                 <BarcodeLabel item={printItem} />
                             </div>
-
-                            {/* This is the hidden component that ReactToPrint actually grabs */}
                             <div style={{ display: 'none' }}>
                                 <BarcodeLabel ref={printRef} item={printItem} />
                             </div>
-
                             <p className="print-instruction">{t('ensure_printer_connected')}</p>
-                            
-                            {/* The button now triggers the hook function */}
                             <button className="inventory-btn inventory-btn--primary" onClick={handlePrintConfirm}>
                                 <Printer size={18} /> {t('confirm_print')}
                             </button>
