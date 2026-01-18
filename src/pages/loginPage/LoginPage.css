@@ -160,3 +160,29 @@
     .login-card--light { background: transparent; }
     .login-card--dark { background: transparent; }
 }
+
+/* Password Toggle Styles */
+.login-card__password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.login-card__eye-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+}
+
+.login-card__eye-btn--light { color: #888; }
+.login-card__eye-btn--light:hover { color: #B8860B; }
+
+.login-card__eye-btn--dark { color: #aaa; }
+.login-card__eye-btn--dark:hover { color: #D4AF37; }
