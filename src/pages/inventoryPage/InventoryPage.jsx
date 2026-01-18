@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useReactToPrint } from 'react-to-print';
 import api from '../../api/axios';
 import InventoryItemRow from '../../components/inventoryItem/InventoryItem';
+import { BarcodeLabel } from '../../components/barcode/BarcodeLabel';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import './InventoryPage.css';
 import { 
-    Plus, Search, ScanLine, X, AlertTriangle
+    Plus, Search, ScanLine, X, Printer
 } from 'lucide-react';
 
 const InventoryPage = () => {
@@ -28,6 +30,21 @@ const InventoryPage = () => {
     const [liveRates, setLiveRates] = useState(null);
     
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    
+    // Print Logic
+    const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+    const [printItem, setPrintItem] = useState(null);
+    const printRef = useRef(null);
+
+    const handlePrintConfirm = useReactToPrint({
+        content: () => printRef.current,
+        onAfterPrint: () => setIsPrintModalOpen(false),
+        pageStyle: `
+            @page { size: 55mm 12mm; margin: 0; }
+            body { margin: 0; }
+        `
+    });
+
     const [newItem, setNewItem] = useState({
         metal_type: 'Gold',
         item_name: '',
@@ -47,6 +64,7 @@ const InventoryPage = () => {
     const [selectedImages, setSelectedImages] = useState([]);
     const fileInputRef = useRef(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const searchInputRef = useRef(null);
 
     const activeBranchId = localStorage.getItem('active_branch_id');
     const activeBranchName = localStorage.getItem('active_branch_name') || t('main_branch');
@@ -57,6 +75,12 @@ const InventoryPage = () => {
             fetchLiveRates();
         }
     }, [activeBranchId, user]);
+
+    useEffect(() => {
+        if (searchInputRef.current) {
+            searchInputRef.current.focus();
+        }
+    }, []);
 
     const fetchInventory = async () => {
         try {
@@ -84,13 +108,9 @@ const InventoryPage = () => {
         }
     };
 
-    const generateSmartBarcode = () => {
-        const metalCode = newItem.metal_type.charAt(0).toUpperCase();
-        const catCode = newItem.category.substring(0, 3).toUpperCase();
-        const uniqueId = Date.now().toString().slice(-6);
-        const random = Math.floor(10 + Math.random() * 90);
-        const code = `${metalCode}-${catCode}-${uniqueId}${random}`;
-        setNewItem(prev => ({ ...prev, barcode: code }));
+    const handlePrintRequest = (item) => {
+        setPrintItem(item);
+        setIsPrintModalOpen(true);
     };
 
     const handleImageSelect = (e) => {
@@ -216,6 +236,7 @@ const InventoryPage = () => {
                     <div className="inventory-search">
                         <Search size={18} className="inventory-search__icon" />
                         <input 
+                            ref={searchInputRef}
                             className="inventory-search__input"
                             type="text" 
                             placeholder={t('search_placeholder')} 
@@ -317,6 +338,7 @@ const InventoryPage = () => {
                                     calculateLivePrice={calculateLivePrice}
                                     calculateProfit={calculateProfit}
                                     onDelete={handleDeleteItem}
+                                    onPrint={handlePrintRequest}
                                     theme={theme}
                                 />
                             ))}
@@ -328,6 +350,7 @@ const InventoryPage = () => {
                 </div>
             </div>
             
+            {/* ADD ITEM MODAL */}
             {isAddModalOpen && (
                 <div className="inventory-modal-overlay">
                     <div className={`inventory-modal inventory-modal--${theme}`}>
@@ -355,14 +378,6 @@ const InventoryPage = () => {
                                     <option value="Bangle">{t('bangle')}</option>
                                     <option value="Pendant">{t('pendant')}</option>
                                 </select>
-                            </div>
-
-                            <div className="inventory-form__barcode-row">
-                                <input className="inventory-form__input inventory-form__input--barcode" placeholder={t('barcode')} required
-                                    value={newItem.barcode} onChange={e => setNewItem({...newItem, barcode: e.target.value})}/>
-                                <button type="button" className="inventory-btn inventory-btn--secondary" onClick={generateSmartBarcode}>
-                                    {t('generate')}
-                                </button>
                             </div>
 
                             <div className="inventory-form__upload-section">
@@ -441,6 +456,39 @@ const InventoryPage = () => {
                                 {isSubmitting ? t('saving') : t('add_item_to_inventory')}
                             </button>
                          </form>
+                    </div>
+                </div>
+            )}
+
+            {/* PRINT MODAL */}
+            {isPrintModalOpen && printItem && (
+                <div className="inventory-modal-overlay">
+                    <div className={`inventory-modal inventory-modal--${theme} inventory-modal--small`}>
+                        <div className="inventory-modal__header">
+                            <h2>{t('print_preview')}</h2>
+                            <button className="inventory-modal__close" onClick={() => setIsPrintModalOpen(false)}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="inventory-modal__body inventory-modal__body--center">
+                            
+                            {/* This is the visual preview for the user */}
+                            <div className="print-preview-area">
+                                <BarcodeLabel item={printItem} />
+                            </div>
+
+                            {/* This is the hidden component that ReactToPrint actually grabs */}
+                            <div style={{ display: 'none' }}>
+                                <BarcodeLabel ref={printRef} item={printItem} />
+                            </div>
+
+                            <p className="print-instruction">{t('ensure_printer_connected')}</p>
+                            
+                            {/* The button now triggers the hook function */}
+                            <button className="inventory-btn inventory-btn--primary" onClick={handlePrintConfirm}>
+                                <Printer size={18} /> {t('confirm_print')}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

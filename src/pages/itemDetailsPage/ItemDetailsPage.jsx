@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useReactToPrint } from 'react-to-print';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
+import { BarcodeLabel } from '../../components/barcode/BarcodeLabel';
 import './ItemDetailsPage.css';
 import { 
     ArrowLeft, Save, Trash2, Printer, Edit3, 
@@ -25,6 +27,19 @@ const ItemDetailsPage = () => {
     const [newImages, setNewImages] = useState([]); 
     const fileInputRef = useRef(null);
     
+    // Print Logic
+    const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+    const printRef = useRef(null);
+
+    const handlePrintConfirm = useReactToPrint({
+        content: () => printRef.current,
+        onAfterPrint: () => setIsPrintModalOpen(false),
+        pageStyle: `
+            @page { size: 55mm 12mm; margin: 0; }
+            body { margin: 0; }
+        `
+    });
+    
     // Swipe logic state
     const touchStartX = useRef(null);
     const touchEndX = useRef(null);
@@ -39,7 +54,6 @@ const ItemDetailsPage = () => {
             const data = res.data.data || res.data;
             setItem(data);
             setFormData(data);
-            console.log(data);
             setLoading(false);
         } catch (err) {
             console.error("Error fetching item:", err);
@@ -62,8 +76,6 @@ const ItemDetailsPage = () => {
         try {
             const data = new FormData();
             Object.keys(formData).forEach(key => {
-                // Only append if it's not the images array (we handle new images separately)
-                // and avoid appending null values as strings "null"
                 if (key !== 'images' && key !== 'createdAt' && key !== 'updatedAt') {
                      data.append(key, formData[key] !== null ? formData[key] : '');
                 }
@@ -110,7 +122,6 @@ const ItemDetailsPage = () => {
     const getImageUrl = (url) => {
         if (!url) return '';
         if (url.startsWith('http')) return url;
-        // Ensure we don't double slash if API_URL has trailing slash or url has leading
         const cleanUrl = url.startsWith('/') ? url : `/${url}`;
         return `${API_URL}${cleanUrl}`;
     };
@@ -127,7 +138,6 @@ const ItemDetailsPage = () => {
         setSelectedImageIndex((prev) => (prev - 1 + totalImages) % totalImages);
     };
 
-    // Touch handlers for swipe
     const onTouchStart = (e) => {
         touchEndX.current = null;
         touchStartX.current = e.targetTouches[0].clientX;
@@ -168,7 +178,7 @@ const ItemDetailsPage = () => {
                 <div className="item-details__actions">
                     {!isEditing ? (
                         <>
-                            <button className="item-action-btn" onClick={() => window.print()}>
+                            <button className="item-action-btn" onClick={() => setIsPrintModalOpen(true)}>
                                 <Printer size={18} /> {t('print')}
                             </button>
                             <button className="item-action-btn item-action-btn--primary" onClick={() => setIsEditing(true)}>
@@ -329,6 +339,38 @@ const ItemDetailsPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* PRINT MODAL */}
+            {isPrintModalOpen && item && (
+                <div className="details-modal-overlay">
+                    <div className={`details-modal details-modal--${theme}`}>
+                        <div className="details-modal__header">
+                            <h2>{t('print_preview')}</h2>
+                            <button className="details-modal__close" onClick={() => setIsPrintModalOpen(false)}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="details-modal__body">
+                            
+                            {/* Visual Preview */}
+                            <div className="print-preview-area">
+                                <BarcodeLabel item={item} />
+                            </div>
+
+                            {/* Hidden Component for ReactToPrint */}
+                            <div style={{ display: 'none' }}>
+                                <BarcodeLabel ref={printRef} item={item} />
+                            </div>
+
+                            <p className="print-instruction">{t('ensure_printer_connected')}</p>
+                            
+                            <button className="item-action-btn item-action-btn--primary" onClick={handlePrintConfirm} style={{width: '100%', justifyContent: 'center', marginTop: '20px'}}>
+                                <Printer size={18} /> {t('confirm_print')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

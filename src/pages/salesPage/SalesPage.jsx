@@ -36,7 +36,6 @@ const SalesPage = () => {
 
     const [liveRates, setLiveRates] = useState(null);
 
-    // New Customer Modal States
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
     const [idFiles, setIdFiles] = useState({ front: null, back: null });
@@ -96,6 +95,7 @@ const SalesPage = () => {
     const addToCart = (item) => {
         if (cart.find(c => c.id === item.id)) {
             toast.warning(t('item_already_in_cart'));
+            setItemSearch('');
             return;
         }
         
@@ -115,7 +115,36 @@ const SalesPage = () => {
         setItemSearch('');
         setShowItemDropdown(false);
         
-        if(itemInputRef.current) itemInputRef.current.focus();
+        if(itemInputRef.current) {
+            setTimeout(() => itemInputRef.current.focus(), 100);
+        }
+    };
+
+    const handleScan = async (e) => {
+        if (e.key === 'Enter' && itemSearch) {
+            e.preventDefault();
+            try {
+                const res = await api.get(`/inventory?search=${itemSearch}`);
+                const foundItems = res.data.data.filter(i => i.status === 'In Stock');
+
+                const exactMatch = foundItems.find(i => i.barcode === itemSearch);
+                
+                if (exactMatch) {
+                    addToCart(exactMatch);
+                } else if (foundItems.length === 1) {
+                    addToCart(foundItems[0]);
+                } else if (foundItems.length > 1) {
+                    setInventoryList(foundItems);
+                    setShowItemDropdown(true);
+                    toast.info(t('multiple_items_found'));
+                } else {
+                    toast.error(t('item_not_found'));
+                    setItemSearch('');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
     };
 
     const updateCartItem = (id, field, value) => {
@@ -227,7 +256,6 @@ const SalesPage = () => {
         }
     };
 
-    // --- New Customer Logic ---
     const handleNewFileSelect = async (e, side) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -286,12 +314,10 @@ const SalesPage = () => {
             
             toast.success(t('customer_added_success'));
             
-            // Auto Select and Close
             setSelectedCustomer(res.data.data);
             setIsFormOpen(false);
             setCustomerSearch(''); 
             
-            // Reset Form
             setFormData({ 
                 full_name: '', phone: '', civil_id: '', type: 'Regular', notes: '',
                 nationality: 'Kuwaiti', gender: 'M', address: '', birth_date: '', expiry_date: ''
@@ -327,6 +353,7 @@ const SalesPage = () => {
                                 placeholder={t('scan_barcode_placeholder')} 
                                 value={itemSearch}
                                 onChange={e => setItemSearch(e.target.value)}
+                                onKeyDown={handleScan}
                                 autoFocus
                             />
                             {showItemDropdown && inventoryList.length > 0 && (

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './InventoryItem.css';
 
-const InventoryItem = ({ item, calculateLivePrice, calculateProfit, onDelete, theme }) => {
+const InventoryItem = ({ item, calculateLivePrice, calculateProfit, onDelete, onPrint, theme }) => {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const API_URL = 'http://localhost:5000';
@@ -25,7 +25,7 @@ const InventoryItem = ({ item, calculateLivePrice, calculateProfit, onDelete, th
 
     const handlePrint = (e) => {
         e.stopPropagation();
-        alert(t('print_coming_soon'));
+        if (onPrint) onPrint(item);
     };
 
     const getImageUrl = (url) => {
