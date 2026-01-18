@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
-import InventoryItemRow from '../../components/inventoryItem/InventoryItem'
+import InventoryItemRow from '../../components/inventoryItem/InventoryItem';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import './InventoryPage.css';
 import { 
-    Plus, Search, ScanLine, X
+    Plus, Search, ScanLine, X, AlertTriangle
 } from 'lucide-react';
 
 const InventoryPage = () => {
     const { theme } = useTheme();
     const { t } = useTranslation();
+    const { user } = useAuth();
+    
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     
@@ -36,6 +39,7 @@ const InventoryPage = () => {
         karat: '21',
         weight: '',
         quantity: 1,
+        min_stock_level: 2,
         buy_price_per_gram: '',
         barcode: ''
     });
@@ -48,14 +52,21 @@ const InventoryPage = () => {
     const activeBranchName = localStorage.getItem('active_branch_name') || t('main_branch');
 
     useEffect(() => {
-        fetchInventory();
-        fetchLiveRates();
-    }, [activeBranchId]);
+        if(user) {
+            fetchInventory();
+            fetchLiveRates();
+        }
+    }, [activeBranchId, user]);
 
     const fetchInventory = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/inventory?branch_id=${activeBranchId}`);
+            
+            const branchQuery = (user?.role === 'store_owner' && activeBranchId) 
+                ? `?branch_id=${activeBranchId}` 
+                : '';
+
+            const res = await api.get(`/inventory${branchQuery}`);
             setItems(res.data.data || []);
             setLoading(false);
         } catch (err) {
@@ -116,7 +127,8 @@ const InventoryPage = () => {
             setNewItem({
                 metal_type: 'Gold', item_name: '', item_name_ar: '', category: 'Ring',
                 country_of_origin: 'Kuwait', description: '', description_ar: '',
-                karat: '21', weight: '', quantity: 1, buy_price_per_gram: '', barcode: ''
+                karat: '21', weight: '', quantity: 1, min_stock_level: 2, 
+                buy_price_per_gram: '', barcode: ''
             });
             setSelectedImages([]);
             setIsAddModalOpen(false);
@@ -160,7 +172,7 @@ const InventoryPage = () => {
     const filteredItems = items.filter(item => {
         const term = searchTerm.toLowerCase();
         const matchesSearch = item.item_name.toLowerCase().includes(term) || 
-                              item.barcode.toLowerCase().includes(term) ||
+                              (item.barcode && item.barcode.toLowerCase().includes(term)) ||
                               item.category.toLowerCase().includes(term);
                               
         const matchesKarat = filterKarat === 'All' || item.karat === filterKarat;
@@ -408,8 +420,12 @@ const InventoryPage = () => {
                             <div className="inventory-form__row">
                                 <input type="number" step="0.001" className="inventory-form__input" placeholder={t('weight_g')} required
                                     value={newItem.weight} onChange={e => setNewItem({...newItem, weight: e.target.value})} />
-                                <input type="number" className="inventory-form__input" placeholder={t('quantity')} required
-                                    value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: e.target.value})} />
+                                <div style={{display:'flex', gap:'8px'}}>
+                                    <input type="number" className="inventory-form__input" placeholder={t('quantity')} required
+                                        value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: e.target.value})} />
+                                    <input type="number" className="inventory-form__input" placeholder={t('min_stock')}
+                                        value={newItem.min_stock_level} onChange={e => setNewItem({...newItem, min_stock_level: e.target.value})} title={t('low_stock_alert_threshold')} />
+                                </div>
                             </div>
 
                             <input type="number" step="0.001" className="inventory-form__input" placeholder={t('buy_price_per_gram')} required

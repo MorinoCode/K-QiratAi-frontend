@@ -20,45 +20,43 @@ const Sidebar = ({ closeSidebar }) => {
   const [activeStore, setActiveStore] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // دریافت ID شعبه فعال از حافظه
   const savedBranchId = localStorage.getItem('active_branch_id');
 
   useEffect(() => {
     const initData = async () => {
       try {
         const userRes = await api.get('/auth/me');
-        const user = userRes.data;
+        const user = userRes.data.data || userRes.data;
         setCurrentUser(user);
 
         let branchList = [];
         
-        if (user.role === 'store_owner') {
+        if (user && user.role === 'store_owner') {
           const branchesRes = await api.get('/manage/branches');
-          branchList = Array.isArray(branchesRes.data.data) ? branchesRes.data.data : [];
-        } else if (user.branch) {
+          branchList = branchesRes.data.data || (Array.isArray(branchesRes.data) ? branchesRes.data : []);
+        } else if (user && user.branch) {
           branchList = [user.branch];
         }
 
         setBranches(branchList);
 
         if (branchList.length > 0) {
-          // پیدا کردن شعبه فعال
           const saved = branchList.find(b => b.id.toString() === savedBranchId);
           if (saved) {
             setActiveStore(saved);
-            // ✅ اطمینان از ذخیره نام شعبه در صورت رفرش
             localStorage.setItem('active_branch_name', saved.name);
           } else {
             const defaultBranch = branchList.find(b => b.is_main) || branchList[0];
             setActiveStore(defaultBranch);
             localStorage.setItem('active_branch_id', defaultBranch.id);
-            // ✅ ذخیره نام شعبه پیش‌فرض
             localStorage.setItem('active_branch_name', defaultBranch.name);
           }
         }
       } catch (err) {
         console.error("Sidebar Init Error:", err);
-        if (err.response?.status === 401) handleLogout();
+        if (err.response && err.response.status === 401) {
+             handleLogout();
+        }
       }
     };
 
@@ -67,7 +65,6 @@ const Sidebar = ({ closeSidebar }) => {
 
   const handleSwitchBranch = (branch) => {
     localStorage.setItem('active_branch_id', branch.id);
-    // ✅ ذخیره نام شعبه جدید
     localStorage.setItem('active_branch_name', branch.name);
     
     setActiveStore(branch);
@@ -82,7 +79,7 @@ const Sidebar = ({ closeSidebar }) => {
     finally {
       localStorage.removeItem('tenant_id');
       localStorage.removeItem('active_branch_id');
-      localStorage.removeItem('active_branch_name'); // ✅ پاک کردن نام شعبه
+      localStorage.removeItem('active_branch_name');
       if (closeSidebar) closeSidebar();
       navigate('/login');
     }
@@ -92,6 +89,22 @@ const Sidebar = ({ closeSidebar }) => {
     const newLang = i18n.language === 'en' ? 'ar' : 'en';
     i18n.changeLanguage(newLang);
     document.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "U";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  };
+
+  const getAvatarColor = (name) => {
+      const colors = ['#D4AF37', '#2563eb', '#16a34a', '#dc2626', '#9333ea', '#db2777'];
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+          hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return colors[Math.abs(hash) % colors.length];
   };
 
   const isActive = (path) => location.pathname === path ? "sidebar__nav-item--active" : "";
@@ -107,6 +120,23 @@ const Sidebar = ({ closeSidebar }) => {
         <button className="sidebar__close-btn" onClick={closeSidebar}><X size={24} /></button>
       </div>
 
+      {currentUser && (
+         <div className={`sidebar__user-profile sidebar__user-profile--${theme}`}>
+            <div 
+                className="sidebar__user-avatar-circle"
+                style={{ backgroundColor: getAvatarColor(currentUser.full_name || 'User') }}
+            >
+                {getInitials(currentUser.full_name)}
+            </div>
+            <div className="sidebar__user-text">
+                <span className="sidebar__user-name">{currentUser.full_name}</span>
+                <span className="sidebar__user-role-badge">
+                    {currentUser.role.replace('_', ' ').toUpperCase()}
+                </span>
+            </div>
+         </div>
+      )}
+
       <div className="sidebar__branch-section">
         <label className="sidebar__label">{t('current_branch')}</label>
         <div
@@ -121,12 +151,9 @@ const Sidebar = ({ closeSidebar }) => {
               <span className="sidebar__branch-name">
                 {activeStore ? activeStore.name : 'Loading...'}
               </span>
-              <span className="sidebar__user-role">
-                {currentUser ? currentUser.role.replace('_', ' ').toUpperCase() : ''}
-              </span>
             </div>
           </div>
-          {canSwitchBranch && <ChevronDown size={16} />}
+          {canSwitchBranch && <ChevronDown size={16} className="rtl-flip" />}
         </div>
 
         {isStoreMenuOpen && canSwitchBranch && (
@@ -183,7 +210,7 @@ const Sidebar = ({ closeSidebar }) => {
           <span>{t(theme === "dark" ? "light_mode" : "dark_mode")}</span>
         </button>
         <button className={`sidebar__logout sidebar__logout--${theme}`} onClick={handleLogout}>
-          <LogOut size={20} /> <span>{t('logout')}</span>
+          <LogOut size={20} className="rtl-flip" /> <span>{t('logout')}</span>
         </button>
       </div>
     </aside>

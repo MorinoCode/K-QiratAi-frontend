@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import api from '../../api/axios';
 import { useTheme } from '../../context/ThemeContext';
 import { Eye, EyeOff } from 'lucide-react';
@@ -17,7 +19,6 @@ const LoginPage = () => {
         username: '',
         password: ''
     });
-    const [errors, setErrors] = useState({ password: '', server: '' });
     const [isFormValid, setIsFormValid] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -50,24 +51,37 @@ const LoginPage = () => {
                 password: credentials.password
             }, config);
 
-            console.log("Login Success:", response.data);
-
             localStorage.setItem('tenant_id', credentials.storeId);
 
             if (response.data.token) {
-                // localStorage.setItem('token', response.data.token); 
+               // Token handling is usually done in axios interceptors or context
             }
 
-            navigate('/dashboard');
+            toast.success(t('login_successful') || 'Login Successful! Redirecting...', {
+                position: "top-center",
+                autoClose: 2000,
+                theme: theme === 'dark' ? 'dark' : 'light',
+            });
+
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 2000);
+
         } catch (err) {
-            console.error("Login Error:", err);
-            const serverError = err.response?.data?.message || t('invalid_credentials');
-            setErrors(prev => ({ ...prev, server: serverError }));
+            console.error(err);
+            const serverError = err.response?.data?.message || t('invalid_credentials') || "Login failed.";
+            
+            toast.error(serverError, {
+                position: "top-center",
+                autoClose: 4000,
+                theme: theme === 'dark' ? 'dark' : 'light',
+            });
         }
     };
 
     return (
         <div className={`login-page login-page--${theme}`}>
+            <ToastContainer />
             <div className={`login-card login-card--${theme}`}>
                 <div className="login-card__kuwait-strip">
                     <div className="login-card__strip-item login-card__strip-item--green"></div>
@@ -108,33 +122,18 @@ const LoginPage = () => {
 
                     <div className={`login-card__form-group login-card__form-group--${theme}`}>
                         <label className={`login-card__label login-card__label--${theme}`}>{t('password')}</label>
-                        <div className="login-card__password-wrapper">
-                            <input
-                                className={`login-card__input ${errors.password ? 'login-card__input--error' : ''} login-card__input--${theme}`}
-                                type={showPassword ? "text" : "password"}
-                                placeholder="••••••••"
-                                value={credentials.password}
-                                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                                required
-                            />
-                            <button
-                                type="button"
-                                className={`login-card__eye-btn login-card__eye-btn--${theme}`}
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
-                        </div>
+                        <input 
+                            className={`login-card__input login-card__input--${theme}`}
+                            type="password" 
+                            placeholder="••••••••"
+                            value={credentials.password}
+                            onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+                            required
+                        />
                     </div>
 
-                    {errors.server && (
-                        <div className="login-card__error-msg">
-                            {errors.server}
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
+                    <button 
+                        type="submit" 
                         className={`login-card__submit-btn ${!isFormValid ? 'login-card__submit-btn--disabled' : ''} login-card__submit-btn--${theme}`}
                         disabled={!isFormValid}
                     >
