@@ -115,7 +115,7 @@ const Sidebar = ({ closeSidebar }) => {
       <div className="sidebar__header-row">
         <div className={`sidebar__logo sidebar__logo--${theme}`}>
           <Layers className="sidebar__logo-icon" size={28} />
-          <span className="sidebar__logo-text">K-QIRAT</span>
+          <span className="sidebar__logo-text" onClick={()=> navigate('/home')}>K-QIRAT</span>
         </div>
         <button className="sidebar__close-btn" onClick={closeSidebar}><X size={24} /></button>
       </div>

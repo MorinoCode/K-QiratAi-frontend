@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from '../../sidebar/Sidebar';
 import { Menu } from 'lucide-react';
 import './MainLayout.css';
 
 const MainLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
+    const navigate = useNavigate()
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
     const closeSidebar = () => setIsSidebarOpen(false);
 
@@ -26,7 +26,7 @@ const MainLayout = () => {
                     <button className="hamburger-btn" onClick={toggleSidebar}>
                         <Menu size={28} />
                     </button>
-                    <div className="brand-title">
+                    <div className="brand-title" onClick={()=> navigate('/home')}>
                         K-QIRAT <span>AI</span>
                     </div>
                 </header>

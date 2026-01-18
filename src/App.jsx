@@ -7,6 +7,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import MainLayout from './components/layout/mainLayout/MainLayout';
 
 import LoginPage from './pages/loginPage/LoginPage';
+import MainPage from './pages/mainPage/MainPage';
 import SignupPage from './pages/signupPage/SignupPage';
 import AnalyticsPage from './pages/analyticsPage/AnalyticsPage';
 import InventoryPage from './pages/inventoryPage/InventoryPage';
@@ -43,6 +44,7 @@ function App() {
 
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<AnalyticsPage />} />
+              <Route path="/home" element={<MainPage/>} />
               <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/inventory/item/:id" element={<ItemDetailsPage />} />
               <Route path="/sales" element={<SalesPage />} />

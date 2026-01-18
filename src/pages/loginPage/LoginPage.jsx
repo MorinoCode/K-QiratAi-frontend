@@ -64,7 +64,7 @@ const LoginPage = () => {
             });
 
             setTimeout(() => {
-                navigate('/dashboard');
+                navigate('/home');
             }, 2000);
 
         } catch (err) {
