@@ -11,11 +11,11 @@ const instance = axios.create({
 instance.interceptors.request.use(
     (config) => {
         const tenantId = localStorage.getItem('tenant_id');
-        
+
         if (tenantId) {
             config.headers['x-tenant-id'] = tenantId;
         }
-        
+
         return config;
     },
     (error) => {
